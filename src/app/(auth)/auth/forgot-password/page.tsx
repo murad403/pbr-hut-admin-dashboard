@@ -1,13 +1,19 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 
 import { Input } from '@/components/ui/input';
 import { forgotPasswordSchema, type ForgotPasswordValues } from '@/validation/auth.validation';
+import { saveAuthEmail } from '@/utils/auth';
+import { useForgotPasswordMutation } from '@/redux/features/auth/auth.api';
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
   const {
     register,
     handleSubmit,
@@ -15,12 +21,23 @@ export default function ForgotPasswordPage() {
   } = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
+      identifierType: 'email',
       email: '',
     },
   });
 
-  const onSubmit = (values: ForgotPasswordValues) => {
-    console.log('Forgot password values:', values);
+  const onSubmit = async (values: ForgotPasswordValues) => {
+    try {
+      const response = await forgotPassword(values).unwrap();
+      saveAuthEmail(response.identifier);
+      toast.success('Password reset OTP sent');
+      router.push('/auth/verify-otp');
+    } catch (error) {
+      const message = error && typeof error === 'object' && 'data' in error && error.data && typeof error.data === 'object' && 'message' in error.data
+        ? String((error.data as { message?: string }).message ?? 'Failed to send OTP')
+        : 'Failed to send OTP';
+      toast.error(message);
+    }
   };
 
   return (
@@ -31,6 +48,7 @@ export default function ForgotPasswordPage() {
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+        <input type="hidden" {...register('identifierType')} />
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-title">Email</label>
           <Input {...register('email')} type="email" placeholder="Enter registered email address" className="h-12" />
@@ -39,9 +57,10 @@ export default function ForgotPasswordPage() {
 
         <button
           type="submit"
-          className="mt-3 h-12 w-full rounded-full bg-[#D94906] text-base font-semibold text-white hover:bg-[#c34105] cursor-pointer"
+          disabled={isLoading}
+          className="mt-3 h-12 w-full rounded-full bg-[#D94906] text-base font-semibold text-white hover:bg-[#c34105] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Get OTP
+          {isLoading ? 'Sending...' : 'Get OTP'}
         </button>
       </form>
     </div>

@@ -2,7 +2,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bike, ChevronLeft, ChevronRight, LogOut, Menu, SquareChartGantt, WalletCards, X} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,8 @@ import logo from "@/assets/logo/logo.png"
 import { RiHomeSmile2Line } from "react-icons/ri";
 import { IoCartOutline } from "react-icons/io5";
 import { MdTune } from "react-icons/md";
+import { clearAllAuthCookies } from "@/utils/auth";
+import { toast } from "sonner";
 
 
 
@@ -29,10 +31,11 @@ const menuItems = [
   { label: "Settings", icon: MdTune, href: "/settings" },
 ];
 
-const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile}: {
+const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile, onLogout}: {
   collapsed: boolean;
   onToggleCollapse: () => void;
   onCloseMobile?: () => void;
+  onLogout: () => void;
 }) => {
   const pathname = usePathname();
 
@@ -110,6 +113,7 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile}: {
           size="icon"
           className={cn("text-[#E5523F] hover:bg-[#E5523F]/10", collapsed && "mx-auto")}
           aria-label="Logout"
+          onClick={onLogout}
         >
           <LogOut className="size-4" />
         </Button>
@@ -120,6 +124,13 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile}: {
 
 const AdminSidebar = ({ collapsed, onToggleCollapse }: AdminSidebarProps) => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    clearAllAuthCookies();
+    toast.success('Logged out successfully');
+    router.push('/auth/sign-in');
+  };
 
   return (
     <>
@@ -140,7 +151,7 @@ const AdminSidebar = ({ collapsed, onToggleCollapse }: AdminSidebarProps) => {
           collapsed ? "w-22" : "w-65"
         )}
       >
-        <SidebarContent collapsed={collapsed} onToggleCollapse={onToggleCollapse} />
+        <SidebarContent collapsed={collapsed} onToggleCollapse={onToggleCollapse} onLogout={handleLogout} />
       </aside>
 
       <div
@@ -161,6 +172,7 @@ const AdminSidebar = ({ collapsed, onToggleCollapse }: AdminSidebarProps) => {
           collapsed={false}
           onToggleCollapse={onToggleCollapse}
           onCloseMobile={() => setMobileOpen(false)}
+          onLogout={handleLogout}
         />
       </aside>
     </>
