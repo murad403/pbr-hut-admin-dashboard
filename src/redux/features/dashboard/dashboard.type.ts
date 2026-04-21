@@ -277,3 +277,8 @@ export type UpsertMenuItemPayload = {
 	sideOptions: Array<{ name: string; price: number; isDefault: boolean }>;
 	extras: Array<{ name: string; price: number }>;
 };
+
+export type UpsertMenuItemWithImagePayload = {
+	data: UpsertMenuItemPayload;
+	image?: File;
+};

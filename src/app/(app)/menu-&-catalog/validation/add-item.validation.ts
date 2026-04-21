@@ -24,6 +24,7 @@ export const addItemSchema = z.object({
       price: z.string().optional(),
     })
   ),
+  image: z.instanceof(File).optional(),
 });
 
 export type AddItemFormValues = z.infer<typeof addItemSchema>;

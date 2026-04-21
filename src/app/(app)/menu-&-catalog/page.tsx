@@ -1,16 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Edit3, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useAddMenuItemMutation, useDeleteMenuItemMutation, useGetAllMenuItemsQuery, useGetCategoriesQuery, useGetMenuItemQuery, useUpdateMenuItemMutation,} from "@/redux/features/dashboard/dashboard.api";
-import type { GetMenuItemsQueryParams, MenuCategory, MenuItemEntity, MenuSize, UpsertMenuItemPayload,} from "@/redux/features/dashboard/dashboard.type";
-import EditItemModal from "./EditItemModal";
-import { type AddItemFormValues } from "./validation/add-item.validation";
+import { useDeleteMenuItemMutation, useGetAllMenuItemsQuery, useGetCategoriesQuery } from "@/redux/features/dashboard/dashboard.api";
+import type { GetMenuItemsQueryParams, MenuItemEntity, MenuSize } from "@/redux/features/dashboard/dashboard.type";
 import CustomPagination from "@/components/shared/CustomPagination";
-import AddItemModal from "./AddItemModal";
 
 
 
@@ -37,85 +36,10 @@ const getDefaultSizeVariant = (item: MenuItemEntity) => {
   return item.sizeVariants.find((variant) => variant.size === "REGULAR") ?? item.sizeVariants[0];
 };
 
-const toNumber = (value: string, fallback = 0) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const mapFormValuesToPayload = (values: AddItemFormValues, displayOrder: number): UpsertMenuItemPayload => {
-  const smallPrice = toNumber(values.sizeVariants[0]?.price ?? "0", 0);
-  const mediumPrice = toNumber(values.sizeVariants[1]?.price ?? "0", smallPrice);
-  const largePrice = toNumber(values.sizeVariants[2]?.price ?? "0", mediumPrice);
-
-  const sizeVariants = values.sizeVariantsEnabled
-    ? [
-        { size: "SMALL" as const, price: smallPrice },
-        { size: "MEDIUM" as const, price: mediumPrice },
-        { size: "LARGE" as const, price: largePrice },
-        { size: "REGULAR" as const, price: mediumPrice },
-      ]
-    : [{ size: "REGULAR" as const, price: mediumPrice }];
-
-  const extras = values.addExtrasEnabled
-    ? values.extras
-        .filter((extra) => extra.label.trim().length > 0)
-        .map((extra) => ({
-          name: extra.label,
-          price: toNumber(extra.price ?? "0", 0),
-        }))
-    : [];
-
-  return {
-    name: values.itemName,
-    description: values.description,
-    displayOrder,
-    isDeliverable: values.deliveryAvailable,
-    isAvailable: values.itemAvailable,
-    allowCustomNote: true,
-    isSideFree: true,
-    isExtrasOptional: true,
-    categoryId: values.categoryId,
-    subCategoryId: values.subCategoryId,
-    tagIds: [],
-    sizeVariants,
-    sideOptions: [
-      {
-        name: values.offeringItem,
-        price: 0,
-        isDefault: true,
-      },
-    ],
-    extras,
-  };
-};
-
-const addItemDefaults: AddItemFormValues = {
-  itemName: "",
-  categoryId: "",
-  subCategoryId: "",
-  description: "",
-  offeringItem: "",
-  sizeVariantsEnabled: true,
-  deliveryAvailable: true,
-  itemAvailable: true,
-  addExtrasEnabled: false,
-  sizeVariants: [
-    { label: "Small", price: "" },
-    { label: "Medium", price: "" },
-    { label: "Large", price: "" },
-  ],
-  extras: [
-    { label: "Hand made Salad", price: "" },
-    { label: "Miyones", price: "" },
-    { label: "Black Olives", price: "" },
-  ],
-};
-
 const Page = () => {
+  const router = useRouter();
   const [activeCategoryId, setActiveCategoryId] = React.useState<string>("ALL");
   const [page, setPage] = React.useState(1);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [editingItemId, setEditingItemId] = React.useState<string | null>(null);
 
   const { data: categories = [], isFetching: isCategoriesLoading } = useGetCategoriesQuery();
 
@@ -133,13 +57,6 @@ const Page = () => {
     isFetching: isItemsLoading,
     refetch: refetchItems,
   } = useGetAllMenuItemsQuery(queryParams);
-
-  const { data: editingItemData, isFetching: isEditingItemLoading } = useGetMenuItemQuery(editingItemId ?? "", {
-    skip: !editingItemId,
-  });
-
-  const [addMenuItem, { isLoading: isAddingItem }] = useAddMenuItemMutation();
-  const [updateMenuItem, { isLoading: isUpdatingItem }] = useUpdateMenuItemMutation();
   const [deleteMenuItem, { isLoading: isDeletingItem }] = useDeleteMenuItemMutation();
 
   const items = itemsResponse?.data ?? [];
@@ -151,6 +68,7 @@ const Page = () => {
   );
 
   const handleDelete = async (id: string) => {
+    // console.log(id)
     try {
       await deleteMenuItem(id).unwrap();
       toast.success("Item deleted successfully");
@@ -160,29 +78,8 @@ const Page = () => {
     }
   };
 
-  const handleEdit = (item: MenuItemEntity) => {
-    setEditingItemId(item.id);
-    setIsModalOpen(true);
-  };
-
-  const handleSave = async (values: AddItemFormValues) => {
-    const payload = mapFormValuesToPayload(values, editingItemData?.displayOrder ?? 1);
-
-    try {
-      if (editingItemId) {
-        await updateMenuItem({ itemId: editingItemId, data: payload }).unwrap();
-        toast.success("Item updated successfully");
-      } else {
-        await addMenuItem(payload).unwrap();
-        toast.success("Item created successfully");
-      }
-
-      setIsModalOpen(false);
-      setEditingItemId(null);
-      refetchItems();
-    } catch {
-      toast.error(editingItemId ? "Failed to update item" : "Failed to create item");
-    }
+  const handleEdit = (itemId: string) => {
+    router.push(`/menu-&-catalog/edit-item?itemId=${itemId}`);
   };
 
   return (
@@ -211,10 +108,7 @@ const Page = () => {
           type="button"
           variant="outline"
           className="rounded-full border-[#F6C6A6] px-4 text-[#D94906]"
-          onClick={() => {
-            setEditingItemId(null);
-            setIsModalOpen(true);
-          }}
+          onClick={() => router.push("/menu-&-catalog/add-item")}
           disabled={isCategoriesLoading}
         >
           <Plus className="size-4" />
@@ -292,7 +186,7 @@ const Page = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleEdit(item)}
+                          onClick={() => handleEdit(item.id)}
                           className="font-semibold text-[#1677FF] hover:underline"
                         >
                           <Edit3 className="mr-1 inline size-4 align-[-2px]" />
@@ -321,36 +215,6 @@ const Page = () => {
         onPageChange={setPage}
         disabled={isItemsLoading}
       />
-
-      {isModalOpen && !editingItemId ? (
-        <AddItemModal
-          title="Add New item"
-          open={isModalOpen}
-          isSaving={isAddingItem}
-          categories={categories as MenuCategory[]}
-          initialValues={addItemDefaults}
-          submitLabel="Add"
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingItemId(null);
-          }}
-          onSave={handleSave}
-        />
-      ) : null}
-
-      {isModalOpen && editingItemId ? (
-        <EditItemModal
-          open={isModalOpen}
-          item={editingItemData ?? null}
-          categories={categories as MenuCategory[]}
-          isSaving={isUpdatingItem || isEditingItemLoading}
-          onClose={() => {
-            setIsModalOpen(false);
-            setEditingItemId(null);
-          }}
-          onSave={handleSave}
-        />
-      ) : null}
     </div>
   );
 };

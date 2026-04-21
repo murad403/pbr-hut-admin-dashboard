@@ -1,5 +1,5 @@
 import baseApi from "@/redux/api/baseApi";
-import type { DashboardApiResponse, DashboardData, GetMenuItemsQueryParams, GetOrdersQueryParams, MenuCategory, MenuItemEntity, MenuItemsResponse, MenuItemsResponseEnvelope, OrderDetails, OrderDetailsResponseEnvelope, OrdersResponse, OrdersResponseEnvelope, UpsertMenuItemPayload } from "./dashboard.type";
+import type { DashboardApiResponse, DashboardData, GetMenuItemsQueryParams, GetOrdersQueryParams, MenuCategory, MenuItemEntity, MenuItemsResponse, MenuItemsResponseEnvelope, OrderDetails, OrderDetailsResponseEnvelope, OrdersResponse, OrdersResponseEnvelope, UpsertMenuItemWithImagePayload } from "./dashboard.type";
 
 
 const dashboardApi = baseApi.injectEndpoints({
@@ -68,13 +68,7 @@ const dashboardApi = baseApi.injectEndpoints({
                     totalPages: 1,
                 },
             }),
-            providesTags: (result) =>
-                result
-                    ? [
-                        ...result.data.map(({ id }) => ({ type: "item" as const, id })),
-                        { type: "item" as const, id: "LIST" },
-                    ]
-                    : [{ type: "item" as const, id: "LIST" }],
+            providesTags: ["item"]
         }),
         getMenuItem: builder.query<MenuItemEntity, string>({
             query: (itemId) => {
@@ -84,32 +78,39 @@ const dashboardApi = baseApi.injectEndpoints({
                 }
             },
             transformResponse: (response: DashboardApiResponse<MenuItemEntity>) => response.data,
-            providesTags: (_result, _error, itemId) => [{ type: "item" as const, id: itemId }],
+            providesTags: ["item"],
         }),
-        addMenuItem: builder.mutation<MenuItemEntity, UpsertMenuItemPayload>({
-            query: (data) => {
+        addMenuItem: builder.mutation<MenuItemEntity, UpsertMenuItemWithImagePayload>({
+            query: ({ data, image }) => {
+                const formData = new FormData();
+                formData.append("data", JSON.stringify(data));
+                if (image) {
+                    formData.append("image", image);
+                }
                 return {
                     url: `/items`,
                     method: "POST",
-                    body: data
+                    body: formData
                 }
             },
             transformResponse: (response: DashboardApiResponse<MenuItemEntity>) => response.data,
-            invalidatesTags: [{ type: "item", id: "LIST" }],
+            invalidatesTags: ["item"]
         }),
-        updateMenuItem: builder.mutation<MenuItemEntity, { itemId: string; data: UpsertMenuItemPayload }>({
+        updateMenuItem: builder.mutation<MenuItemEntity, { itemId: string; data: UpsertMenuItemWithImagePayload }>({
             query: ({ itemId, data }) => {
+                const formData = new FormData();
+                formData.append("data", JSON.stringify(data.data));
+                if (data.image) {
+                    formData.append("image", data.image);
+                }
                 return {
                     url: `/items/${itemId}`,
                     method: "PATCH",
-                    body: data
+                    body: formData
                 }
             },
             transformResponse: (response: DashboardApiResponse<MenuItemEntity>) => response.data,
-            invalidatesTags: (_result, _error, arg) => [
-                { type: "item", id: arg.itemId },
-                { type: "item", id: "LIST" },
-            ],
+            invalidatesTags: ["item"]
         }),
         deleteMenuItem: builder.mutation<null, string>({
             query: (itemId) => {
@@ -119,10 +120,40 @@ const dashboardApi = baseApi.injectEndpoints({
                 }
             },
             transformResponse: () => null,
-            invalidatesTags: (_result, _error, itemId) => [
-                { type: "item", id: itemId },
-                { type: "item", id: "LIST" },
-            ],
+            invalidatesTags: ["item"]
+        }),
+
+
+
+
+        // banner ads----------------------
+        getBannerAds: builder.query({
+            query: () => {
+                return {
+                    url: `/ads`,
+                    method: "GET"
+                }
+            },
+            providesTags: ["ads"]
+        }),
+        addBannerAds: builder.mutation({
+            query: (data) => {
+                return {
+                    url: `/ads`,
+                    method: "POST",
+                    body: data
+                }
+            },
+            invalidatesTags: ["ads"]
+        }),
+        deleteBannerAds: builder.mutation({
+            query: (adsId) => {
+                return {
+                    url: `/ads/${adsId}`,
+                    method: "DELETE"
+                }
+            },
+            invalidatesTags: ["ads"]
         }),
     })
 })
