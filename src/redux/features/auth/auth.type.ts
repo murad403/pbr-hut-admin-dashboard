@@ -49,3 +49,10 @@ export type ResetPasswordRequest = {
 };
 
 export type ResetPasswordResponse = null;
+
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type ChangePasswordResponse = null;

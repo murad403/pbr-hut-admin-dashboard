@@ -265,23 +265,7 @@ const Page = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
-      <div className="sticky top-0 z-10 border-b border-black/5 bg-white px-4 py-3">
-        <div className="mx-auto flex max-w-2xl items-center gap-3">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-black/5"
-          >
-            <ArrowLeft className="size-4 text-black/60" />
-          </button>
-          <div>
-            <h1 className="text-[16px] font-semibold tracking-[-0.02em] text-[#151515]">Edit Item</h1>
-            <p className="text-[12px] text-black/45">Update the selected menu item</p>
-          </div>
-        </div>
-      </div>
-
+    <div>
       <form onSubmit={handleSubmitForm} className="mx-auto max-w-2xl space-y-4 px-4 py-6">
         <Section title="Basic Info">
           <Field label="Item Name*" error={errors.name?.message}>

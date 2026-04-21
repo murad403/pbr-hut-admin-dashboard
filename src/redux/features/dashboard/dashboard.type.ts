@@ -282,3 +282,115 @@ export type UpsertMenuItemWithImagePayload = {
 	data: UpsertMenuItemPayload;
 	image?: File;
 };
+
+export type BannerAdType = 'ITEM' | 'URL';
+
+export type BannerAd = {
+	id: string;
+	order: number;
+	title: string;
+	mediaUrl: string;
+	color: string;
+	type: BannerAdType;
+	data: string;
+	clickCount: number;
+};
+
+export type RiderFilterStatus = 'active' | 'pending';
+
+export type RiderNidStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+
+export type RiderUser = {
+	id: string;
+	email: string;
+	phone: string;
+	name: string;
+	profilePicture: string | null;
+	role: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+};
+
+export type RiderEntity = {
+	userId: string;
+	latitude: number;
+	longitude: number;
+	h3Index: string;
+	nidFrontUrl: string | null;
+	nidBackUrl: string | null;
+	nidStatus: RiderNidStatus;
+	verifiedAt: string | null;
+	rejectionReason: string | null;
+	isAvailable: boolean;
+	isBusy: boolean;
+	createdAt: string;
+	updatedAt: string;
+	totalEarned: string;
+	availableBalance: string;
+	user: RiderUser;
+};
+
+export type GetRidersQueryParams = {
+	page: number;
+	limit: number;
+	status: RiderFilterStatus;
+};
+
+export type RidersResponse = {
+	pagination: OrdersPagination;
+	data: RiderEntity[];
+};
+
+export type RidersResponseEnvelope = {
+	success: boolean;
+	statusCode: number;
+	message: string;
+	pagination: OrdersPagination;
+	data: RiderEntity[];
+};
+
+export type ApproveRiderPayload = {
+	userId: string;
+};
+
+export type DeclineRiderPayload = {
+	userId: string;
+	rejectionReason: string;
+};
+
+export type RiderNidActionEntity = Omit<RiderEntity, 'user'>;
+
+export type RiderNidActionResponseEnvelope = DashboardApiResponse<RiderNidActionEntity>;
+
+export type RestaurantProfile = {
+	id: string;
+	name: string;
+	address: string;
+	latitude: number;
+	longitude: number;
+	h3Index: string | null;
+	openingHour: string;
+	closingHour: string;
+	deliveryRadius: number;
+	baseDeliveryFee: string;
+	minimumOrderAmountCOD: string;
+	isCODEnabled: boolean;
+	createdAt: string;
+	updatedAt: string;
+};
+
+export type UpdateProfilePayload = {
+	name: string;
+	address: string;
+	latitude: number;
+	longitude: number;
+	openingHour: string;
+	closingHour: string;
+	deliveryRadius: number;
+	baseDeliveryFee: number;
+	minimumOrderAmountCOD: number;
+	isCODEnabled: boolean;
+};
+
+export type RestaurantProfileResponseEnvelope = DashboardApiResponse<RestaurantProfile>;

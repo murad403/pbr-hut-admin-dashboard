@@ -3,9 +3,9 @@
 import React from 'react';
 import Image from 'next/image';
 import { FileImage, Upload, X } from 'lucide-react';
-
-import cardBack from '@/assets/card/back.png';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useAddBannerAdsMutation } from '@/redux/features/dashboard/dashboard.api';
 
 type CreateBannerModalProps = {
   onClose: () => void;
@@ -15,8 +15,14 @@ const ctaColors = ['#000000', '#1D4ED8', '#EC4899', '#F59E0B'];
 
 export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [addBannerAds, { isLoading: isSaving }] = useAddBannerAdsMutation();
+
+  const [order, setOrder] = React.useState(1);
   const [ctaTitle, setCtaTitle] = React.useState('');
   const [ctaColor, setCtaColor] = React.useState(ctaColors[0]);
+  const [targetType, setTargetType] = React.useState<'ITEM' | 'URL'>('ITEM');
+  const [targetData, setTargetData] = React.useState('');
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [uploadedImage, setUploadedImage] = React.useState<string>('');
 
   const showPreview = uploadedImage.length > 0 && ctaTitle.trim().length > 0 && ctaColor.length > 0;
@@ -25,11 +31,51 @@ export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setSelectedFile(file);
+
     const objectUrl = URL.createObjectURL(file);
     setUploadedImage((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return objectUrl;
     });
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a banner image');
+      return;
+    }
+
+    if (!ctaTitle.trim()) {
+      toast.error('Please enter a title');
+      return;
+    }
+
+    if (!targetData.trim()) {
+      toast.error('Please enter target data');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append(
+      'data',
+      JSON.stringify({
+        order,
+        title: ctaTitle.trim(),
+        color: ctaColor,
+        type: targetType,
+        data: targetData.trim(),
+      })
+    );
+    formData.append('media', selectedFile);
+
+    try {
+      await addBannerAds(formData).unwrap();
+      toast.success('Banner created successfully');
+      onClose();
+    } catch {
+      toast.error('Failed to create banner');
+    }
   };
 
   React.useEffect(() => {
@@ -97,6 +143,41 @@ export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
             </div>
           </div>
 
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-black/60">Order</label>
+              <input
+                type="number"
+                min={1}
+                value={order}
+                onChange={(event) => setOrder(Number(event.target.value) || 1)}
+                className="h-10 w-full rounded-md border border-black/10 bg-[#E8EBEF] px-3 text-sm text-title outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-black/60">Type</label>
+              <select
+                value={targetType}
+                onChange={(event) => setTargetType(event.target.value as 'ITEM' | 'URL')}
+                className="h-10 w-full rounded-md border border-black/10 bg-[#E8EBEF] px-3 text-sm text-title outline-none"
+              >
+                <option value="ITEM">ITEM</option>
+                <option value="URL">URL</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <label className="mb-1 block text-xs font-semibold uppercase text-black/60">Target Data</label>
+            <input
+              value={targetData}
+              onChange={(event) => setTargetData(event.target.value)}
+              placeholder={targetType === 'ITEM' ? 'Item ID' : 'https://example.com'}
+              className="h-10 w-full rounded-md border border-black/10 bg-[#E8EBEF] px-3 text-sm text-title outline-none placeholder:text-black/35"
+            />
+          </div>
+
           <div className="mt-4 grid grid-cols-2 gap-3">
             <button
               type="button"
@@ -107,9 +188,11 @@ export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
             </button>
             <button
               type="button"
+              onClick={handleUpload}
+              disabled={isSaving}
               className="h-10 rounded-full bg-[#D94906] text-sm font-semibold text-white hover:bg-[#c34105]"
             >
-              Upload
+              {isSaving ? 'Uploading...' : 'Upload'}
             </button>
           </div>
         </div>
@@ -140,7 +223,6 @@ export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
                 </>
               ) : (
                 <>
-                  <Image src={cardBack} alt="Default mobile preview" fill className="object-cover opacity-90" />
                   <div className="absolute inset-0 bg-black/20" />
                   <div className="absolute inset-x-0 bottom-16 px-3 text-center">
                     <p className="mb-2 text-4 font-semibold leading-5 text-white">Summer Flash Sale</p>

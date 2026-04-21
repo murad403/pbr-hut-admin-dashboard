@@ -1,5 +1,5 @@
 import baseApi from "@/redux/api/baseApi";
-import type { DashboardApiResponse, DashboardData, GetMenuItemsQueryParams, GetOrdersQueryParams, MenuCategory, MenuItemEntity, MenuItemsResponse, MenuItemsResponseEnvelope, OrderDetails, OrderDetailsResponseEnvelope, OrdersResponse, OrdersResponseEnvelope, UpsertMenuItemWithImagePayload } from "./dashboard.type";
+import type { ApproveRiderPayload, BannerAd, DashboardApiResponse, DashboardData, DeclineRiderPayload, GetMenuItemsQueryParams, GetOrdersQueryParams, GetRidersQueryParams, MenuCategory, MenuItemEntity, MenuItemsResponse, MenuItemsResponseEnvelope, OrderDetails, OrderDetailsResponseEnvelope, OrdersResponse, OrdersResponseEnvelope, RiderNidActionEntity, RiderNidActionResponseEnvelope, RidersResponse, RidersResponseEnvelope, RestaurantProfile, RestaurantProfileResponseEnvelope, UpdateProfilePayload, UpsertMenuItemWithImagePayload } from "./dashboard.type";
 
 
 const dashboardApi = baseApi.injectEndpoints({
@@ -127,16 +127,17 @@ const dashboardApi = baseApi.injectEndpoints({
 
 
         // banner ads----------------------
-        getBannerAds: builder.query({
+        getBannerAds: builder.query<BannerAd[], void>({
             query: () => {
                 return {
                     url: `/ads`,
                     method: "GET"
                 }
             },
+            transformResponse: (response: DashboardApiResponse<BannerAd[]>) => response.data,
             providesTags: ["ads"]
         }),
-        addBannerAds: builder.mutation({
+        addBannerAds: builder.mutation<BannerAd, FormData>({
             query: (data) => {
                 return {
                     url: `/ads`,
@@ -144,16 +145,81 @@ const dashboardApi = baseApi.injectEndpoints({
                     body: data
                 }
             },
+            transformResponse: (response: DashboardApiResponse<BannerAd>) => response.data,
             invalidatesTags: ["ads"]
         }),
-        deleteBannerAds: builder.mutation({
+        deleteBannerAds: builder.mutation<null, string>({
             query: (adsId) => {
                 return {
                     url: `/ads/${adsId}`,
                     method: "DELETE"
                 }
             },
+            transformResponse: () => null,
             invalidatesTags: ["ads"]
+        }),
+
+
+        // riders ---------------------
+        getRiders: builder.query<RidersResponse, GetRidersQueryParams>({
+            query: (params) => {
+                return {
+                    url: `/admin/riders`,
+                    method: "GET",
+                    params,
+                }
+            },
+            transformResponse: (response: RidersResponseEnvelope) => ({
+                data: response.data,
+                pagination: response.pagination,
+            }),
+            providesTags: ["riders"]
+        }),
+        approveRider: builder.mutation<RiderNidActionEntity, ApproveRiderPayload>({
+            query: (data) => {
+                return {
+                    url: `/admin/riders/nid/approve`,
+                    method: "POST",
+                    body: data
+                }
+            },
+            transformResponse: (response: RiderNidActionResponseEnvelope) => response.data,
+            invalidatesTags: ["riders"]
+        }),
+        declineRider: builder.mutation<RiderNidActionEntity, DeclineRiderPayload>({
+            query: (data) => {
+                return {
+                    url: `/admin/riders/nid/decline`,
+                    method: "POST",
+                    body: data
+                }
+            },
+            transformResponse: (response: RiderNidActionResponseEnvelope) => response.data,
+            invalidatesTags: ["riders"]
+        }),
+
+
+        // settings --------------------------------
+        getProfile: builder.query<RestaurantProfile, void>({
+            query: () => {
+                return {
+                    url: `/restaurant/primary`,
+                    method: "GET"
+                }
+            },
+            transformResponse: (response: RestaurantProfileResponseEnvelope) => response.data,
+            providesTags: ["profile"],
+        }),
+        updateProfile: builder.mutation<RestaurantProfile, UpdateProfilePayload>({
+            query: (data) => {
+                return {
+                    url: `/restaurant/primary`,
+                    method: "POST",
+                    body: data
+                }
+            },
+            transformResponse: (response: RestaurantProfileResponseEnvelope) => response.data,
+            invalidatesTags: ["profile"],
         }),
     })
 })
@@ -170,4 +236,12 @@ export const {
     useAddMenuItemMutation,
     useUpdateMenuItemMutation,
     useDeleteMenuItemMutation,
+    useGetBannerAdsQuery,
+    useAddBannerAdsMutation,
+    useDeleteBannerAdsMutation,
+    useGetRidersQuery,
+    useApproveRiderMutation,
+    useDeclineRiderMutation,
+    useGetProfileQuery,
+    useUpdateProfileMutation,
 } = dashboardApi;

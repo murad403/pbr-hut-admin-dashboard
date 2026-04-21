@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Edit3, Loader2, Plus, Trash2 } from "lucide-react";
+import { Check, Copy, Edit3, Eye, Loader2, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,8 @@ const Page = () => {
   const router = useRouter();
   const [activeCategoryId, setActiveCategoryId] = React.useState<string>("ALL");
   const [page, setPage] = React.useState(1);
+  const [selectedItem, setSelectedItem] = React.useState<MenuItemEntity | null>(null);
+  const [copiedItemId, setCopiedItemId] = React.useState<string | null>(null);
 
   const { data: categories = [], isFetching: isCategoriesLoading } = useGetCategoriesQuery();
 
@@ -80,6 +81,17 @@ const Page = () => {
 
   const handleEdit = (itemId: string) => {
     router.push(`/menu-&-catalog/edit-item?itemId=${itemId}`);
+  };
+
+  const handleCopyItemId = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedItemId(id);
+      toast.success("Item id copied");
+      window.setTimeout(() => setCopiedItemId(null), 1500);
+    } catch {
+      toast.error("Failed to copy item id");
+    }
   };
 
   return (
@@ -177,6 +189,14 @@ const Page = () => {
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
+                          onClick={() => setSelectedItem(item)}
+                          className="text-[#1677FF] hover:text-[#0f5fcb]"
+                          aria-label={`View ${item.name}`}
+                        >
+                          <Eye className="size-4" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleDelete(item.id)}
                           className="text-[#FB6A6A] hover:text-[#ef4444] disabled:opacity-50"
                           aria-label={`Delete ${item.name}`}
@@ -215,6 +235,61 @@ const Page = () => {
         onPageChange={setPage}
         disabled={isItemsLoading}
       />
+
+      {selectedItem ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-[1px]">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-title">Item Details</h3>
+              <button
+                type="button"
+                onClick={() => setSelectedItem(null)}
+                className="inline-flex rounded-md p-1 text-black/60 hover:bg-black/5"
+                aria-label="Close"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-3 gap-2">
+                <p className="text-title">Name</p>
+                <p className="col-span-2 text-title">{selectedItem.name}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <p className="text-title">Category</p>
+                <p className="col-span-2 text-title">{selectedItem.category?.name ?? "-"}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <p className="text-title">Sub-Category</p>
+                <p className="col-span-2 text-title">{selectedItem.subCategory?.name ?? "-"}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <p className="text-title">Description</p>
+                <p className="col-span-2 text-title">{selectedItem.description || "-"}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <p className="text-title">Item ID</p>
+                <div className="col-span-2 flex items-center gap-2">
+                  <p className="truncate text-title">{selectedItem.id}</p>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyItemId(selectedItem.id)}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-black/10 text-[#1677FF] hover:bg-[#EFF6FF]"
+                    aria-label="Copy item id"
+                  >
+                    {copiedItemId === selectedItem.id ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
