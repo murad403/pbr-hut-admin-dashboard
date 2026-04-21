@@ -1,13 +1,27 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { TopSellingItem } from "@/redux/features/dashboard/dashboard.type";
 
-const topItems = [
+const defaultTopItems = [
   { rank: "#1", name: "Pepperoni Pizza", category: "Pizzas", sold: "123 sold" },
   { rank: "#2", name: "Smash Burger", category: "Burgers", sold: "94 sold" },
   { rank: "#3", name: "Jerk Chicken", category: "Jamaican", sold: "54 sold" },
   { rank: "#4", name: "Cheese Burger", category: "Burgers", sold: "32 sold" },
 ];
 
-const TopSellingItems = () => {
+type TopSellingItemsProps = {
+  topSellingItems?: TopSellingItem[];
+};
+
+const TopSellingItems = ({ topSellingItems }: TopSellingItemsProps) => {
+  const topItems = topSellingItems && topSellingItems.length > 0
+    ? topSellingItems.map((item, index) => ({
+        rank: `#${index + 1}`,
+        name: item.itemName,
+        category: item.category,
+        sold: `${item.unitsSold} sold`,
+      }))
+    : defaultTopItems;
+
   return (
     <Card>
       <CardHeader>

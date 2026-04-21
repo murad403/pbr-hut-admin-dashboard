@@ -1,318 +1,274 @@
 "use client";
 import React from "react";
-import { Download, Search } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
+import Custompagination from "@/components/shared/Custompagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-
+import { useGetOrdersQuery, useOrderDetailsQuery} from "@/redux/features/dashboard/dashboard.api";
+import type { GetOrdersQueryParams, OrderDetails, OrderStatusApi, OrderSummary} from "@/redux/features/dashboard/dashboard.type";
 
 import OrderDetailsModal from "./OrderDetailsModal";
 
-type OrderStatus = "pending" | "preparing" | "delivered" | "scheduled" | "cancelled" | "on the way";
-type FulfillmentType = "delivery" | "pickup";
-type PaymentType = "paid" | "cod";
-
-type Order = {
-  id: string;
-  dateTime: string;
-  customer: string;
-  itemsQty: string;
-  orderTotal: string;
-  fulfillment: FulfillmentType;
-  payment: PaymentType;
-  status: OrderStatus;
-  phone: string;
-  address: string;
-  items: Array<{ name: string; qty: string; price: string }>;
-  subtotal: string;
-  deliveryFee: string;
-  tax: string;
-  total: string;
-  note: string;
-};
-
-const statusTabs = ["all", "pending", "preparing", "on the way", "delivered", "cancelled", "scheduled"] as const;
-
-const orders: Order[] = [
-  {
-    id: "#4821",
-    dateTime: "Apr 14 2:14pm",
-    customer: "Michael Johnson",
-    itemsQty: "2x",
-    orderTotal: "$45.00",
-    fulfillment: "delivery",
-    payment: "paid",
-    status: "pending",
-    phone: "(876) 555-1001",
-    address: "15 Ocean Aven, Albion",
-    items: [
-      { name: "2x Pepperoni Pizza (Large)", qty: "$33.99", price: "$33.99" },
-      { name: "2x Pepsi 500ml", qty: "$4.00", price: "$4.00" },
-    ],
-    subtotal: "$37.99",
-    deliveryFee: "$4.00",
-    tax: "$1.00",
-    total: "$39.99",
-    note: "E.g., No onions, extra napkins...",
-  },
-  {
-    id: "#4824",
-    dateTime: "Feb 12 8:55am",
-    customer: "John Doe",
-    itemsQty: "1x",
-    orderTotal: "$14.99",
-    fulfillment: "pickup",
-    payment: "cod",
-    status: "preparing",
-    phone: "(876) 555-1002",
-    address: "Kingston, Jamaica",
-    items: [{ name: "1x Smash Burger", qty: "$14.99", price: "$14.99" }],
-    subtotal: "$14.99",
-    deliveryFee: "$0.00",
-    tax: "$0.00",
-    total: "$14.99",
-    note: "",
-  },
-  {
-    id: "#4827",
-    dateTime: "Mar 10 4:30pm",
-    customer: "Alice Smith",
-    itemsQty: "3x",
-    orderTotal: "$29.99",
-    fulfillment: "delivery",
-    payment: "paid",
-    status: "delivered",
-    phone: "(876) 555-1003",
-    address: "Spanish Town, St. Catherine",
-    items: [{ name: "3x Jerk Chicken", qty: "$29.99", price: "$29.99" }],
-    subtotal: "$29.99",
-    deliveryFee: "$0.00",
-    tax: "$0.00",
-    total: "$29.99",
-    note: "",
-  },
-  {
-    id: "#4830",
-    dateTime: "Jan 5 9:00am",
-    customer: "Bob Brown",
-    itemsQty: "4x",
-    orderTotal: "$89.00",
-    fulfillment: "pickup",
-    payment: "cod",
-    status: "scheduled",
-    phone: "(876) 555-1004",
-    address: "Portmore, St. Catherine",
-    items: [{ name: "4x Family Meal", qty: "$89.00", price: "$89.00" }],
-    subtotal: "$89.00",
-    deliveryFee: "$0.00",
-    tax: "$0.00",
-    total: "$89.00",
-    note: "",
-  },
-  {
-    id: "#4833",
-    dateTime: "Dec 25 11:15am",
-    customer: "Charlie Davis",
-    itemsQty: "5x",
-    orderTotal: "$24.50",
-    fulfillment: "delivery",
-    payment: "paid",
-    status: "cancelled",
-    phone: "(876) 555-1005",
-    address: "May Pen, Clarendon",
-    items: [{ name: "5x Chicken Wings", qty: "$24.50", price: "$24.50" }],
-    subtotal: "$24.50",
-    deliveryFee: "$0.00",
-    tax: "$0.00",
-    total: "$24.50",
-    note: "",
-  },
-  {
-    id: "#4836",
-    dateTime: "Nov 3 2:45pm",
-    customer: "Diana Evans",
-    itemsQty: "6x",
-    orderTotal: "$67.75",
-    fulfillment: "delivery",
-    payment: "cod",
-    status: "on the way",
-    phone: "(876) 555-1006",
-    address: "Montego Bay, St. James",
-    items: [{ name: "6x Burger Box", qty: "$67.75", price: "$67.75" }],
-    subtotal: "$67.75",
-    deliveryFee: "$0.00",
-    tax: "$0.00",
-    total: "$67.75",
-    note: "",
-  },
+const statusTabs: Array<"ALL" | OrderStatusApi> = [
+    "ALL",
+    "PENDING",
+    "CONFIRMED",
+    "PREPARING",
+    "READY_FOR_PICKUP",
+    "OUT_FOR_DELIVERY",
+    "DELIVERED",
+    "PICKED_UP",
+    "CANCELLED",
+    "SCHEDULED",
 ];
 
-const tabsLabel = statusTabs.map((tab) => tab);
+const formatStatusLabel = (status: string) =>
+    status
+        .toLowerCase()
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
 
-const formatStatus = (status: string) =>
-  status.replace(/\b\w/g, (match) => match.toUpperCase());
+const formatDateTime = (value: string) => {
+    const date = new Date(value);
 
-const getStatusVariant = (status: OrderStatus) => {
-  if (status === "pending") return "pending";
-  if (status === "preparing") return "preparing";
-  if (status === "delivered") return "delivered";
-  if (status === "scheduled") return "scheduled";
-  return "cancelled";
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+    });
 };
 
-const toCsvValue = (value: string) => `"${value.replace(/"/g, '""')}"`;
+const formatCurrency = (amount: string | number) => {
+    const numericValue = Number(amount);
+
+    return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(Number.isFinite(numericValue) ? numericValue : 0);
+};
+
+const getStatusVariant = (status: OrderStatusApi) => {
+    if (status === "PENDING" || status === "CONFIRMED") return "pending";
+    if (status === "PREPARING" || status === "READY_FOR_PICKUP" || status === "OUT_FOR_DELIVERY") return "preparing";
+    if (status === "DELIVERED" || status === "PICKED_UP") return "delivered";
+    if (status === "SCHEDULED") return "scheduled";
+
+    return "cancelled";
+};
+
+const getPaymentPill = (paymentMethod: OrderSummary["paymentMethod"]) => {
+    if (paymentMethod === "CASH_ON_DELIVERY") {
+        return "cod";
+    }
+
+    return "paid";
+};
+
+const mapOrderDetailsForModal = (order: OrderDetails | undefined | null) => {
+    if (!order) {
+        return null;
+    }
+
+    return {
+        id: `#${order.orderNumber}`,
+        customer: order.deliveryAddress?.name ?? "N/A",
+        phone: order.deliveryAddress?.phoneNumber ?? "N/A",
+        fulfillment: order.type === "DELIVERY" ? "delivery" : "pickup",
+        payment: getPaymentPill(order.paymentMethod),
+        address: order.deliveryAddress?.address ?? "N/A",
+        items: order.items.map((item) => ({
+            id: item.id,
+            name: `${item.quantity}x ${item.itemName}`,
+            qty: String(item.quantity),
+            price: formatCurrency(item.totalPrice),
+        })),
+        subtotal: formatCurrency(order.itemsTotal),
+        deliveryFee: formatCurrency(order.deliveryCharge),
+        tax: formatCurrency(order.taxes),
+        total: formatCurrency(order.totalAmount),
+        note: order.items.map((item) => item.customNote).filter(Boolean).join(" | "),
+    } as const;
+};
 
 const Page = () => {
-  const [activeTab, setActiveTab] = React.useState<(typeof statusTabs)[number]>("all");
-  const [searchValue, setSearchValue] = React.useState("");
-  const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
+    const [activeTab, setActiveTab] = React.useState<(typeof statusTabs)[number]>("ALL");
+    const [page, setPage] = React.useState(1);
+    const [selectedOrderId, setSelectedOrderId] = React.useState<string | null>(null);
 
-  const visibleOrders = React.useMemo(() => {
-    const query = searchValue.trim().toLowerCase();
+    const queryParams = React.useMemo<GetOrdersQueryParams>(
+        () => ({
+            page,
+            limit: 20,
+            status: activeTab === "ALL" ? undefined : activeTab,
+        }),
+        [activeTab, page]
+    );
 
-    return orders.filter((order) => {
-      const matchesTab = activeTab === "all" || order.status === activeTab;
-      const matchesQuery =
-        query.length === 0 ||
-        [order.id, order.customer, order.dateTime, order.status, order.fulfillment, order.payment]
-          .join(" ")
-          .toLowerCase()
-          .includes(query);
+    const { data: ordersResponse, isFetching: isOrdersLoading } = useGetOrdersQuery(queryParams);
 
-      return matchesTab && matchesQuery;
+    const { data: orderDetailsData, isFetching: isOrderDetailsLoading } = useOrderDetailsQuery(selectedOrderId ?? "", {
+        skip: !selectedOrderId,
     });
-  }, [activeTab, searchValue]);
 
-  const handleDownloadCsv = () => {
-    const rows = [
-      ["Order#", "Date & Time", "Customer", "Items Qty.", "Order Total", "Fulfilment", "Paymet", "Status"],
-      ...visibleOrders.map((order) => [
-        order.id,
-        order.dateTime,
-        order.customer,
-        order.itemsQty,
-        order.orderTotal,
-        order.fulfillment,
-        order.payment,
-        order.status,
-      ]),
-    ];
+    const orders = ordersResponse?.data ?? [];
+    const pagination = ordersResponse?.pagination;
 
-    const csv = rows.map((row) => row.map(toCsvValue).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const handleTabChange = (tab: (typeof statusTabs)[number]) => {
+        setActiveTab(tab);
+        setPage(1);
+    };
 
-    link.href = url;
-    link.download = "orders.csv";
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+    const handleDownloadCsv = () => {
+        window.location.href = "https://plbck79v-45598.inc1.devtunnels.ms/api/v1/admin/orders/download/csv";
+    };
 
-  return (
-    <div className="space-y-4">
-      <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center justify-between w-full gap-2 md:gap-3">
+    return (
+        <div className="space-y-4">
+            <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center justify-between w-full gap-2 md:gap-3">
+                    <div className="flex flex-wrap items-center gap-2 rounded-full bg-[#FAEEE8] p-1.5 text-sm text-black/65">
+                        {statusTabs.map((tab) => (
+                            <button
+                                key={tab}
+                                type="button"
+                                onClick={() => handleTabChange(tab)}
+                                className={cn(
+                                    "rounded-full px-3 py-1.5 transition-colors",
+                                    activeTab === tab ? "bg-white text-title shadow-sm" : "hover:text-title"
+                                )}
+                            >
+                                {formatStatusLabel(tab)}
+                            </button>
+                        ))}
+                    </div>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-full bg-[#FAEEE8] p-1.5 text-sm text-black/65">
-            {tabsLabel.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "rounded-full px-3 py-1.5 transition-colors",
-                  activeTab === tab ? "bg-white text-title shadow-sm" : "hover:text-title"
-                )}
-              >
-                {formatStatus(tab)}
-              </button>
-            ))}
-          </div>
-          <Button variant="outline" onClick={handleDownloadCsv} className="rounded-full border-[#F6C6A6] px-4 text-[#D94906]">
-            <Download className="size-4" />
-            Download CSV
-          </Button>
+                    <Button variant="outline" onClick={handleDownloadCsv} className="rounded-full border-[#F6C6A6] px-4 text-[#D94906]">
+                        <Download className="size-4" />
+                        Download CSV
+                    </Button>
+                </div>
+            </header>
+
+            <section>
+                <div className="relative mt-4 overflow-x-auto rounded-2xl border border-black/8">
+                    {isOrdersLoading ? (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-title shadow-sm">
+                                <Loader2 className="size-4 animate-spin text-[#D94906]" />
+                                Loading orders...
+                            </div>
+                        </div>
+                    ) : null}
+
+                    <table className="min-w-230 w-full border-separate border-spacing-0 text-sm">
+                        <thead className="bg-[#FAFAFA] text-left text-description">
+                            <tr>
+                                <th className="px-4 py-3 font-medium text-description">Order#</th>
+                                <th className="px-4 py-3 font-medium text-description">Date &amp; Time</th>
+                                <th className="px-4 py-3 font-medium text-description">Customer</th>
+                                <th className="px-4 py-3 font-medium text-description">Items Qty.</th>
+                                <th className="px-4 py-3 font-medium text-description">Order Total</th>
+                                <th className="px-4 py-3 font-medium text-description">Fulfilment</th>
+                                <th className="px-4 py-3 font-medium text-description">Paymet</th>
+                                <th className="px-4 py-3 font-medium text-description">Status</th>
+                                <th className="px-4 py-3 font-medium text-description">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {orders.map((order, index) => {
+                                const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+                                const isDelivery = order.type === "DELIVERY";
+                                const paymentPill = getPaymentPill(order.paymentMethod);
+
+                                return (
+                                    <tr
+                                        key={order.id}
+                                        className={cn(
+                                            "border-b border-black/8 transition-colors hover:bg-black/3",
+                                            index % 2 === 1 && "bg-black/2"
+                                        )}
+                                    >
+                                        <td className="px-4 py-3 text-title">#{order.orderNumber}</td>
+                                        <td className="px-4 py-3 text-title">{formatDateTime(order.createdAt)}</td>
+                                        <td className="px-4 py-3 text-title">{order.deliveryAddress?.name ?? "N/A"}</td>
+                                        <td className="px-4 py-3 text-title">{totalQuantity}x</td>
+                                        <td className="px-4 py-3 text-title">{formatCurrency(order.totalAmount)}</td>
+                                        <td className="px-4 py-3">
+                                            <span
+                                                className={cn(
+                                                    "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase text-white",
+                                                    isDelivery ? "bg-[#E44D12]" : "bg-[#1477FF]"
+                                                )}
+                                            >
+                                                {isDelivery ? "delivery" : "pickup"}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span
+                                                className={cn(
+                                                    "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase text-white",
+                                                    paymentPill === "paid" ? "bg-emerald-500" : "bg-amber-500"
+                                                )}
+                                            >
+                                                {paymentPill}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <Badge variant={getStatusVariant(order.status)}>{formatStatusLabel(order.status)}</Badge>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedOrderId(order.id)}
+                                                className="font-semibold text-[#1677FF] hover:underline cursor-pointer"
+                                            >
+                                                Details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+
+                            {!isOrdersLoading && orders.length === 0 ? (
+                                <tr>
+                                    <td colSpan={9} className="px-4 py-8 text-center text-description">
+                                        No orders found.
+                                    </td>
+                                </tr>
+                            ) : null}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="mt-4">
+                    <Custompagination
+                        page={pagination?.page ?? page}
+                        totalPages={pagination?.totalPages ?? 1}
+                        onPageChange={setPage}
+                        disabled={isOrdersLoading}
+                    />
+                </div>
+            </section>
+
+            {selectedOrderId ? (
+                <OrderDetailsModal
+                    order={mapOrderDetailsForModal(orderDetailsData)}
+                    isLoading={isOrderDetailsLoading}
+                    onClose={() => setSelectedOrderId(null)}
+                />
+            ) : null}
         </div>
-      </header>
-
-      <section className="">
-        <div className="mt-4 overflow-x-auto rounded-2xl border border-black/8">
-          <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
-            <thead className="bg-[#FAFAFA] text-left text-description">
-              <tr>
-                <th className="px-4 py-3 font-medium text-description">Order#</th>
-                <th className="px-4 py-3 font-medium text-description">Date &amp; Time</th>
-                <th className="px-4 py-3 font-medium text-description">Customer</th>
-                <th className="px-4 py-3 font-medium text-description">Items Qty.</th>
-                <th className="px-4 py-3 font-medium text-description">Order Total</th>
-                <th className="px-4 py-3 font-medium text-description">Fulfilment</th>
-                <th className="px-4 py-3 font-medium text-description">Paymet</th>
-                <th className="px-4 py-3 font-medium text-description">Status</th>
-                <th className="px-4 py-3 font-medium text-description">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {visibleOrders.map((order, index) => (
-                <tr
-                  key={order.id}
-                  className={cn(
-                    "border-b border-black/8 transition-colors hover:bg-black/[0.03]",
-                    index % 2 === 1 && "bg-black/[0.02]"
-                  )}
-                >
-                  <td className="px-4 py-3 text-title">{order.id}</td>
-                  <td className="px-4 py-3 text-title">{order.dateTime}</td>
-                  <td className="px-4 py-3 text-title">{order.customer}</td>
-                  <td className="px-4 py-3 text-title">{order.itemsQty}</td>
-                  <td className="px-4 py-3 text-title">{order.orderTotal}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase text-white",
-                        order.fulfillment === "delivery" ? "bg-[#E44D12]" : "bg-[#1477FF]"
-                      )}
-                    >
-                      {order.fulfillment}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase text-white",
-                        order.payment === "paid" ? "bg-emerald-500" : "bg-amber-500"
-                      )}
-                    >
-                      {order.payment}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedOrder(order)}
-                      className="font-semibold text-[#1677FF] hover:underline cursor-pointer"
-                    >
-                      Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {selectedOrder ? (
-        <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
-      ) : null}
-    </div>
-  );
+    );
 };
 
 export default Page;

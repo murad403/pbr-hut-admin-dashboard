@@ -1,12 +1,25 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { WeeklyRevenuePoint } from "@/redux/features/dashboard/dashboard.type";
 
-const weeklyRevenue = [1200, 2450, 1850, 2100, 1820, 1650, 2120];
-const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const maxValue = Math.max(...weeklyRevenue);
-const yTicks = [3500, 2500, 2000, 1500, 1000, 500, 0];
+const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 const plotHeight = 320;
 
-const WeeklyRevenue = () => {
+type WeeklyRevenueProps = {
+    weeklyRevenue?: WeeklyRevenuePoint[];
+};
+
+const WeeklyRevenue = ({ weeklyRevenue }: WeeklyRevenueProps) => {
+        const revenueByDay = new Map((weeklyRevenue ?? []).map((item) => [item.day, Number(item.revenue)]));
+        const revenueValues = weekdays.map((day) => {
+            const value = revenueByDay.get(day) ?? 0;
+            return Number.isFinite(value) ? value : 0;
+        });
+
+        const maxValue = Math.max(...revenueValues, 1);
+        const roundedMax = Math.max(500, Math.ceil(maxValue / 500) * 500);
+        const tickStep = roundedMax / 6;
+        const yTicks = Array.from({ length: 7 }, (_, index) => Math.round((6 - index) * tickStep));
+
     return (
         <Card>
             <CardHeader>
@@ -50,7 +63,7 @@ const WeeklyRevenue = () => {
                                 </div>
 
                                 <div className="absolute inset-x-2 bottom-0 top-0 sm:inset-x-5">
-                                    {weeklyRevenue.map((value, index) => {
+                                    {revenueValues.map((value, index) => {
                                         const barHeight = Math.max((value / maxValue) * plotHeight, 18);
                                         const left = (index + 0.5) * (100 / weekdays.length);
 

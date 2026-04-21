@@ -36,13 +36,13 @@ const MainWrapper = ({ children }: { children: React.ReactNode }) => {
                     <header className="mb-4 shrink-0 flex flex-col gap-3 md:mb-5 md:flex-row md:items-center md:justify-between">
                         <h1 className="pl-12 text-2xl font-semibold text-title md:pl-0">{pageTitle}</h1>
 
-                        <div className="relative flex-1 md:w-70 md:flex-none">
-                                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-black/40" />
-                                <Input placeholder="Search orders, products, riders..." className="pl-10 bg-white rounded-2xl" />
-                            </div>
+                        {/* <div className="relative flex-1 md:w-70 md:flex-none">
+                            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-black/40" />
+                            <Input placeholder="Search orders, products, riders..." className="pl-10 bg-white rounded-2xl" />
+                        </div> */}
 
                         <div className="flex items-center gap-2 md:gap-3 bg-[#1111110F] p-1 rounded-2xl">
-                            
+
 
                             <button
                                 type="button"

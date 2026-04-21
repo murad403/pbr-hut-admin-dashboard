@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { RecentOrder } from "@/redux/features/dashboard/dashboard.type";
 
-const orders = [
+const defaultOrders = [
   { id: "#4821", customer: "Michael Johnson", qty: "2x", total: "$45.00", status: "pending", time: "8:15 AM" },
   { id: "#4824", customer: "John Doe", qty: "1x", total: "$14.99", status: "preparing", time: "8:17 AM" },
   { id: "#4827", customer: "Emily Clarke", qty: "4x", total: "$29.99", status: "delivered", time: "8:20 AM" },
@@ -9,7 +10,62 @@ const orders = [
   { id: "#4832", customer: "Sophia Turner", qty: "5x", total: "$19.99", status: "cancelled", time: "8:25 AM" },
 ] as const;
 
-const RecentOrders = () => {
+type BadgeStatus = "pending" | "preparing" | "delivered" | "scheduled" | "cancelled";
+
+const toBadgeStatus = (status: string): BadgeStatus => {
+  const normalizedStatus = status.toLowerCase();
+
+  if (
+    normalizedStatus === "pending"
+    || normalizedStatus === "preparing"
+    || normalizedStatus === "delivered"
+    || normalizedStatus === "scheduled"
+    || normalizedStatus === "cancelled"
+  ) {
+    return normalizedStatus;
+  }
+
+  return "pending";
+};
+
+const formatCurrency = (amount: string | number) => {
+  const parsedAmount = Number(amount);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(parsedAmount) ? parsedAmount : 0);
+};
+
+const formatOrderTime = (time: string) => {
+  const parsedDate = new Date(time);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return time;
+  }
+
+  return parsedDate.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+type RecentOrdersProps = {
+  recentOrders?: RecentOrder[];
+};
+
+const RecentOrders = ({ recentOrders }: RecentOrdersProps) => {
+  const orders = recentOrders && recentOrders.length > 0
+    ? recentOrders.map((order) => ({
+        id: `#${order.orderNumber}`,
+        customer: order.customerName,
+        qty: `${order.itemsQty}x`,
+        total: formatCurrency(order.orderTotal),
+        status: toBadgeStatus(order.status),
+        time: formatOrderTime(order.time),
+      }))
+    : defaultOrders;
+
   return (
     <Card>
       <CardHeader>
