@@ -1,0 +1,34 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const topItems = [
+  { rank: "#1", name: "Pepperoni Pizza", category: "Pizzas", sold: "123 sold" },
+  { rank: "#2", name: "Smash Burger", category: "Burgers", sold: "94 sold" },
+  { rank: "#3", name: "Jerk Chicken", category: "Jamaican", sold: "54 sold" },
+  { rank: "#4", name: "Cheese Burger", category: "Burgers", sold: "32 sold" },
+];
+
+const TopSellingItems = () => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>TOP SELLING ITEMS</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {topItems.map((item) => (
+          <div key={item.rank} className="flex items-start justify-between border-b border-black/6 pb-3 last:border-b-0">
+            <div className="flex items-start gap-3">
+              <span className="text-sm font-semibold text-black/45">{item.rank}</span>
+              <div>
+                <p className="text-sm font-medium text-title">{item.name}</p>
+                <p className="text-xs text-black/45">{item.category}</p>
+              </div>
+            </div>
+            <span className="text-sm font-semibold text-[#D94906]">{item.sold}</span>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default TopSellingItems;

@@ -23,7 +23,7 @@ const MainWrapper = ({ children }: { children: React.ReactNode }) => {
     const pageTitle = pageTitleByPath[pathname] ?? "Dashboard";
 
     return (
-        <div className="h-screen overflow-hidden bg-[#F3F3F3]">
+        <div className="h-screen overflow-hidden bg-[#F9F8F5]">
             <AdminSidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed((prev) => !prev)} />
 
             <div
@@ -36,15 +36,17 @@ const MainWrapper = ({ children }: { children: React.ReactNode }) => {
                     <header className="mb-4 shrink-0 flex flex-col gap-3 md:mb-5 md:flex-row md:items-center md:justify-between">
                         <h1 className="pl-12 text-2xl font-semibold text-title md:pl-0">{pageTitle}</h1>
 
-                        <div className="flex items-center gap-2 md:gap-3">
-                            <div className="relative flex-1 md:w-70 md:flex-none">
+                        <div className="relative flex-1 md:w-70 md:flex-none">
                                 <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-black/40" />
                                 <Input placeholder="Search orders, products, riders..." className="pl-10" />
                             </div>
 
+                        <div className="flex items-center gap-2 md:gap-3 bg-[#1111110F] p-1 rounded-2xl">
+                            
+
                             <button
                                 type="button"
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-black/70 hover:bg-black/5"
+                                className="inline-flex p-3 items-center justify-center rounded-full border border-black/10 bg-white text-black/70 hover:bg-black/5"
                                 aria-label="Notifications"
                             >
                                 <Bell className="size-4" />

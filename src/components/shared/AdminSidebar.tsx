@@ -3,10 +3,13 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bike, ChevronLeft, ChevronRight, LayoutDashboard, LogOut, Menu, Settings, ShoppingBag, SquareChartGantt, X} from "lucide-react";
+import { Bike, ChevronLeft, ChevronRight, LogOut, Menu, SquareChartGantt, WalletCards, X} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo/logo.png"
+import { RiHomeSmile2Line } from "react-icons/ri";
+import { IoCartOutline } from "react-icons/io5";
+import { MdTune } from "react-icons/md";
 
 
 
@@ -18,12 +21,12 @@ type AdminSidebarProps = {
 
 
 const menuItems = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { label: "Orders", icon: ShoppingBag, href: "/orders" },
+  { label: "Dashboard", icon: RiHomeSmile2Line, href: "/" },
+  { label: "Orders", icon: IoCartOutline, href: "/orders" },
   { label: "Menu & Catalog", icon: SquareChartGantt, href: "/menu-&-catalog" },
-  { label: "Banner Ads", icon: SquareChartGantt, href: "/banner-ads" },
+  { label: "Banner Ads", icon: WalletCards, href: "/banner-ads" },
   { label: "Riders", icon: Bike, href: "/riders" },
-  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Settings", icon: MdTune, href: "/settings" },
 ];
 
 const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile}: {
@@ -78,7 +81,7 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile}: {
               key={item.label}
               href={item.href}
               className={cn(
-                "flex w-full items-center rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex w-full items-center rounded-xl px-3 py-3 text-sm font-medium transition-colors",
                 collapsed ? "justify-center" : "gap-2.5",
                 isActive
                   ? "bg-heading text-white"
@@ -86,7 +89,7 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile}: {
               )}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className="size-4 shrink-0" />
+              <Icon className="size-5 shrink-0" />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
@@ -133,7 +136,7 @@ const AdminSidebar = ({ collapsed, onToggleCollapse }: AdminSidebarProps) => {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden overflow-hidden bg-[#F3F3F3] transition-[width] duration-300 lg:flex",
+          "fixed inset-y-0 left-0 z-30 hidden overflow-hidden bg-[#F9F8F5] transition-[width] duration-300 lg:flex",
           collapsed ? "w-22" : "w-65"
         )}
       >
