@@ -10,10 +10,10 @@ import { cn } from "@/lib/utils";
 
 const pageTitleByPath: Record<string, string> = {
     "/": "Dashboard",
-    "/orders": "Orders",
+    "/orders": "Orders Management",
     "/menu-&-catalog": "Menu & Catalog",
     "/banner-ads": "Banner Ads",
-    "/riders": "Riders",
+    "/riders": "Manage Riders",
     "/settings": "Settings",
 };
 
@@ -38,7 +38,7 @@ const MainWrapper = ({ children }: { children: React.ReactNode }) => {
 
                         <div className="relative flex-1 md:w-70 md:flex-none">
                                 <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-black/40" />
-                                <Input placeholder="Search orders, products, riders..." className="pl-10" />
+                                <Input placeholder="Search orders, products, riders..." className="pl-10 bg-white rounded-2xl" />
                             </div>
 
                         <div className="flex items-center gap-2 md:gap-3 bg-[#1111110F] p-1 rounded-2xl">
