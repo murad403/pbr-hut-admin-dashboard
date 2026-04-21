@@ -1,45 +1,86 @@
+"use client";
+import { PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const categoryLegend = [
-  { label: "Pizza", color: "#D94906" },
-  { label: "Grill", color: "#F2A700" },
-  { label: "Burgers", color: "#22C55E" },
-  { label: "Jamaican", color: "#3B82F6" },
-  { label: "Desserts", color: "#8B5CF6" },
+const data = [
+  { name: "PIZZAS",         value: 110, color: "#E14A00" },
+  { name: "BURGERS",        value: 80,  color: "#F5AE00" },
+  { name: "JAMAICAN",       value: 58,  color: "#28C85E" },
+  { name: "EVENT\nSUPPLIES",value: 60,  color: "#3E82F7" },
+  { name: "BEVERAGES",      value: 52,  color: "#8F4AD7" },
 ];
+
+const RADIAN = Math.PI / 180;
+
+const renderCustomLabel = ({
+  cx, cy, midAngle, innerRadius, outerRadius, name,
+}: {
+  cx: number; cy: number; midAngle: number;
+  innerRadius: number; outerRadius: number; name: string;
+}) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const rotate = -midAngle + 90;
+
+  const lines = name.split("\n");
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor="middle"
+      dominantBaseline="central"
+      transform={`rotate(${rotate}, ${x}, ${y})`}
+      fontSize={13}
+      fontWeight="700"
+      fontFamily="sans-serif"
+      letterSpacing="0.5"
+    >
+      {lines.map((line, i) => (
+        <tspan
+          key={i}
+          x={x}
+          dy={i === 0 ? (lines.length > 1 ? "-0.6em" : "0") : "1.2em"}
+        >
+          {line}
+        </tspan>
+      ))}
+    </text>
+  );
+};
 
 const OrdersByCategory = () => {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>ORDERS BY CATEGORY</CardTitle>
+      <CardHeader className="p-6 pb-0 sm:p-7 sm:pb-0">
+        <CardTitle className="text-2xl font-semibold tracking-tight text-white/10 sm:text-[28px]">
+          ORDERS BY CATEGORY
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-xl border border-black/8 p-4">
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-around">
-            <div
-              className="relative h-36 w-36 rounded-full"
-              style={{
-                background:
-                  "conic-gradient(#D94906 0deg 120deg, #F2A700 120deg 200deg, #22C55E 200deg 270deg, #3B82F6 270deg 320deg, #8B5CF6 320deg 360deg)",
-              }}
-            >
-              <div className="absolute inset-6.5 rounded-full bg-white" />
-            </div>
 
-            <div className="grid w-full max-w-57.5 grid-cols-2 gap-x-4 gap-y-2 text-xs sm:text-sm">
-              {categoryLegend.map((item) => (
-                <div key={item.label} className="flex items-center gap-2">
-                  <span
-                    className="inline-block h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-black/65">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <CardContent className="flex min-h-105 items-center justify-center p-6 pt-0 sm:min-h-130 sm:p-7 sm:pt-0">
+        <PieChart width={360} height={360}>
+          <Pie
+            data={data}
+            cx={175}
+            cy={175}
+            innerRadius={80}
+            outerRadius={175}
+            paddingAngle={4}
+            dataKey="value"
+            startAngle={90}
+            endAngle={-270}
+            labelLine={false}
+            label={renderCustomLabel}
+            cornerRadius={6}
+          >
+            {data.map((entry, index) => (
+              <Cell key={index} fill={entry.color} stroke="none" />
+            ))}
+          </Pie>
+        </PieChart>
       </CardContent>
     </Card>
   );

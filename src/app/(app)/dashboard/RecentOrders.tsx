@@ -19,7 +19,7 @@ const RecentOrders = () => {
         <div className="overflow-x-auto">
           <table className="min-w-170 w-full border-separate border-spacing-y-1 text-sm">
             <thead>
-              <tr className="text-left text-black/50">
+              <tr className="text-left text-description text-sm">
                 <th className="px-2 py-2 font-medium">Order#</th>
                 <th className="px-2 py-2 font-medium">Customer</th>
                 <th className="hidden px-2 py-2 font-medium md:table-cell">Items Qty.</th>
@@ -29,16 +29,16 @@ const RecentOrders = () => {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order, index) => (
-                <tr key={order.id} className={index === 1 ? "rounded-xl bg-black/5" : ""}>
-                  <td className="px-2 py-2.5 font-semibold text-black/75">{order.id}</td>
-                  <td className="px-2 py-2.5 text-title">{order.customer}</td>
-                  <td className="hidden px-2 py-2.5 text-black/70 md:table-cell">{order.qty}</td>
-                  <td className="px-2 py-2.5 text-black/70">{order.total}</td>
-                  <td className="px-2 py-2.5">
+              {orders.map((order) => (
+                <tr key={order.id} className="hover:bg-[#E8E8E8] [&>td]:border-b [&>td]:border-black/8 last:[&>td]:border-b-0">
+                  <td className="px-2 py-3 font-semibold text-title">{order.id}</td>
+                  <td className="px-2 py-3 text-title">{order.customer}</td>
+                  <td className="hidden px-2 py-3 text-title md:table-cell">{order.qty}</td>
+                  <td className="px-2 py-3 text-title">{order.total}</td>
+                  <td className="px-2 py-3">
                     <Badge variant={order.status}>{order.status}</Badge>
                   </td>
-                  <td className="hidden px-2 py-2.5 text-black/70 lg:table-cell">{order.time}</td>
+                  <td className="hidden px-2 py-3 text-title lg:table-cell">{order.time}</td>
                 </tr>
               ))}
             </tbody>

@@ -15,15 +15,15 @@ const TopSellingItems = () => {
       </CardHeader>
       <CardContent className="space-y-3">
         {topItems.map((item) => (
-          <div key={item.rank} className="flex items-start justify-between border-b border-black/6 pb-3 last:border-b-0">
-            <div className="flex items-start gap-3">
+          <div key={item.rank} className="flex items-center justify-between pb-3 last:border-b-0">
+            <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-black/45">{item.rank}</span>
               <div>
-                <p className="text-sm font-medium text-title">{item.name}</p>
-                <p className="text-xs text-black/45">{item.category}</p>
+                <p className="text-sm md:text-base font-medium text-title">{item.name}</p>
+                <p className="text-sm text-description">{item.category}</p>
               </div>
             </div>
-            <span className="text-sm font-semibold text-[#D94906]">{item.sold}</span>
+            <span className="text-sm font-semibold text-[#D63B00]">{item.sold}</span>
           </div>
         ))}
       </CardContent>
