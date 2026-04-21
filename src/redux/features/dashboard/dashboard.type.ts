@@ -169,3 +169,111 @@ export type GetOrdersQueryParams = {
 	status?: OrderStatusApi;
 	searchTerm?: string;
 };
+
+export type MenuSubCategory = {
+	id: string;
+	name: string;
+};
+
+export type MenuCategory = {
+	id: string;
+	name: string;
+	subCategories: MenuSubCategory[];
+};
+
+export type MenuTag = {
+	id: string;
+	name: string;
+};
+
+export type MenuSize = 'SMALL' | 'MEDIUM' | 'LARGE' | 'REGULAR';
+
+export type MenuItemSizeVariant = {
+	id: string;
+	size: MenuSize;
+	price: string;
+};
+
+export type MenuItemSideOption = {
+	id: string;
+	name: string;
+	price: string;
+	isDefault: boolean;
+};
+
+export type MenuItemExtra = {
+	id: string;
+	name: string;
+	price: string;
+};
+
+export type MenuItemEntity = {
+	id: string;
+	name: string;
+	description: string;
+	imageUrl: string;
+	displayOrder: number;
+	isDeliverable: boolean;
+	isAvailable: boolean;
+	allowCustomNote: boolean;
+	isSideFree: boolean;
+	isExtrasOptional: boolean;
+	hasSizeVariants: boolean;
+	hasExtras: boolean;
+	categoryId: string;
+	subCategoryId: string;
+	createdAt: string;
+	updatedAt: string;
+	deletedAt: string | null;
+	category: {
+		id: string;
+		name: string;
+	};
+	subCategory: {
+		id: string;
+		name: string;
+	};
+	tags: MenuTag[];
+	sizeVariants: MenuItemSizeVariant[];
+	sideOptions: MenuItemSideOption[];
+	extras: MenuItemExtra[];
+};
+
+export type GetMenuItemsQueryParams = {
+	page: number;
+	limit: number;
+	categoryId?: string;
+};
+
+export type MenuItemsResponse = {
+	data: MenuItemEntity[];
+	pagination: OrdersPagination;
+};
+
+export type MenuItemsResponseEnvelope = {
+	success: boolean;
+	statusCode: number;
+	message: string;
+	meta?: {
+		pagination?: OrdersPagination;
+	};
+	pagination?: OrdersPagination;
+	data: MenuItemEntity[];
+};
+
+export type UpsertMenuItemPayload = {
+	name: string;
+	description: string;
+	displayOrder: number;
+	isDeliverable: boolean;
+	isAvailable: boolean;
+	allowCustomNote: boolean;
+	isSideFree: boolean;
+	isExtrasOptional: boolean;
+	categoryId: string;
+	subCategoryId: string;
+	tagIds: string[];
+	sizeVariants: Array<{ size: MenuSize; price: number }>;
+	sideOptions: Array<{ name: string; price: number; isDefault: boolean }>;
+	extras: Array<{ name: string; price: number }>;
+};

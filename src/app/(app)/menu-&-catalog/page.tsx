@@ -1,77 +1,188 @@
 "use client";
-
 import React from "react";
-import { Edit3, Plus, Trash2 } from "lucide-react";
-
+import { Edit3, Loader2, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-import AddItemModal from "./AddItemModal";
+import { useAddMenuItemMutation, useDeleteMenuItemMutation, useGetAllMenuItemsQuery, useGetCategoriesQuery, useGetMenuItemQuery, useUpdateMenuItemMutation,} from "@/redux/features/dashboard/dashboard.api";
+import type { GetMenuItemsQueryParams, MenuCategory, MenuItemEntity, MenuSize, UpsertMenuItemPayload,} from "@/redux/features/dashboard/dashboard.type";
+import EditItemModal from "./EditItemModal";
 import { type AddItemFormValues } from "./validation/add-item.validation";
+import CustomPagination from "@/components/shared/CustomPagination";
+import AddItemModal from "./AddItemModal";
 
-const categoryTabs = [
-  "All",
-  "Pizzas",
-  "Burgers",
-  "Ribz",
-  "Rotisserie",
-  "Jamaican",
-  "Cookie Meals",
-  "Beverages",
-  "Miyones",
-  "Event Supplies",
-] as const;
 
-type MenuItem = {
-  id: string;
-  category: string;
-  subCategory: string;
-  defaultSize: string;
-  price: string;
-  sizeVariants: string;
-  deliveryAvailable: boolean;
-  itemAvailable: boolean;
+
+const formatCurrency = (amount: string | number) => {
+  const numericValue = Number(amount);
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(numericValue) ? numericValue : 0);
 };
 
-const initialItems: MenuItem[] = [
-  { id: "#4821", category: "Burgers", subCategory: "Chocolate", defaultSize: "Medium", price: "$5.22", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4824", category: "Burgers", subCategory: "Paket Hemat", defaultSize: "Medium", price: "$5.22", sizeVariants: "SM, MD, L, XL", deliveryAvailable: false, itemAvailable: false },
-  { id: "#4827", category: "Beverages", subCategory: "Cream", defaultSize: "Medium", price: "$6.48", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4830", category: "Ribz", subCategory: "Boba", defaultSize: "Medium", price: "$11.70", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4833", category: "Jamaican", subCategory: "Cream", defaultSize: "Medium", price: "$11.70", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4836", category: "Jamaican", subCategory: "Coca Cola", defaultSize: "Medium", price: "$8.99", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4839", category: "Rotisserie", subCategory: "Cheese", defaultSize: "Medium", price: "$14.81", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4842", category: "Cookie Meals", subCategory: "No Sugar", defaultSize: "Medium", price: "$8.99", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4845", category: "Beverages", subCategory: "Chicken", defaultSize: "Medium", price: "$11.70", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4848", category: "Pizzas", subCategory: "Ice Cream", defaultSize: "Medium", price: "$6.48", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4851", category: "Nuts", subCategory: "Beef", defaultSize: "Medium", price: "$17.84", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4854", category: "Nuts", subCategory: "Less Sugar", defaultSize: "Medium", price: "$8.99", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4857", category: "Nuts", subCategory: "Burger", defaultSize: "Medium", price: "$8.99", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-  { id: "#4860", category: "Chicken", subCategory: "Fried Fries", defaultSize: "Medium", price: "$6.48", sizeVariants: "SM, MD, L, XL", deliveryAvailable: true, itemAvailable: true },
-];
+const getSizeLabel = (size: MenuSize) => {
+  if (size === "SMALL") return "SM";
+  if (size === "MEDIUM") return "MD";
+  if (size === "LARGE") return "L";
+
+  return "REG";
+};
+
+const getDefaultSizeVariant = (item: MenuItemEntity) => {
+  return item.sizeVariants.find((variant) => variant.size === "REGULAR") ?? item.sizeVariants[0];
+};
+
+const toNumber = (value: string, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const mapFormValuesToPayload = (values: AddItemFormValues, displayOrder: number): UpsertMenuItemPayload => {
+  const smallPrice = toNumber(values.sizeVariants[0]?.price ?? "0", 0);
+  const mediumPrice = toNumber(values.sizeVariants[1]?.price ?? "0", smallPrice);
+  const largePrice = toNumber(values.sizeVariants[2]?.price ?? "0", mediumPrice);
+
+  const sizeVariants = values.sizeVariantsEnabled
+    ? [
+        { size: "SMALL" as const, price: smallPrice },
+        { size: "MEDIUM" as const, price: mediumPrice },
+        { size: "LARGE" as const, price: largePrice },
+        { size: "REGULAR" as const, price: mediumPrice },
+      ]
+    : [{ size: "REGULAR" as const, price: mediumPrice }];
+
+  const extras = values.addExtrasEnabled
+    ? values.extras
+        .filter((extra) => extra.label.trim().length > 0)
+        .map((extra) => ({
+          name: extra.label,
+          price: toNumber(extra.price ?? "0", 0),
+        }))
+    : [];
+
+  return {
+    name: values.itemName,
+    description: values.description,
+    displayOrder,
+    isDeliverable: values.deliveryAvailable,
+    isAvailable: values.itemAvailable,
+    allowCustomNote: true,
+    isSideFree: true,
+    isExtrasOptional: true,
+    categoryId: values.categoryId,
+    subCategoryId: values.subCategoryId,
+    tagIds: [],
+    sizeVariants,
+    sideOptions: [
+      {
+        name: values.offeringItem,
+        price: 0,
+        isDefault: true,
+      },
+    ],
+    extras,
+  };
+};
+
+const addItemDefaults: AddItemFormValues = {
+  itemName: "",
+  categoryId: "",
+  subCategoryId: "",
+  description: "",
+  offeringItem: "",
+  sizeVariantsEnabled: true,
+  deliveryAvailable: true,
+  itemAvailable: true,
+  addExtrasEnabled: false,
+  sizeVariants: [
+    { label: "Small", price: "" },
+    { label: "Medium", price: "" },
+    { label: "Large", price: "" },
+  ],
+  extras: [
+    { label: "Hand made Salad", price: "" },
+    { label: "Miyones", price: "" },
+    { label: "Black Olives", price: "" },
+  ],
+};
 
 const Page = () => {
-  const [activeCategory, setActiveCategory] = React.useState<string>("All");
-  const [items, setItems] = React.useState<MenuItem[]>(initialItems);
+  const [activeCategoryId, setActiveCategoryId] = React.useState<string>("ALL");
+  const [page, setPage] = React.useState(1);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [editingItem, setEditingItem] = React.useState<MenuItem | null>(null);
+  const [editingItemId, setEditingItemId] = React.useState<string | null>(null);
 
-  const filteredItems = React.useMemo(() => {
-    if (activeCategory === "All") {
-      return items;
+  const { data: categories = [], isFetching: isCategoriesLoading } = useGetCategoriesQuery();
+
+  const queryParams = React.useMemo<GetMenuItemsQueryParams>(
+    () => ({
+      page,
+      limit: 20,
+      categoryId: activeCategoryId === "ALL" ? undefined : activeCategoryId,
+    }),
+    [activeCategoryId, page]
+  );
+
+  const {
+    data: itemsResponse,
+    isFetching: isItemsLoading,
+    refetch: refetchItems,
+  } = useGetAllMenuItemsQuery(queryParams);
+
+  const { data: editingItemData, isFetching: isEditingItemLoading } = useGetMenuItemQuery(editingItemId ?? "", {
+    skip: !editingItemId,
+  });
+
+  const [addMenuItem, { isLoading: isAddingItem }] = useAddMenuItemMutation();
+  const [updateMenuItem, { isLoading: isUpdatingItem }] = useUpdateMenuItemMutation();
+  const [deleteMenuItem, { isLoading: isDeletingItem }] = useDeleteMenuItemMutation();
+
+  const items = itemsResponse?.data ?? [];
+  const pagination = itemsResponse?.pagination;
+
+  const categoryTabs = React.useMemo(
+    () => [{ id: "ALL", name: "All" }, ...categories.map((category) => ({ id: category.id, name: category.name }))],
+    [categories]
+  );
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteMenuItem(id).unwrap();
+      toast.success("Item deleted successfully");
+      refetchItems();
+    } catch {
+      toast.error("Failed to delete item");
     }
-
-    return items.filter((item) => item.category === activeCategory);
-  }, [activeCategory, items]);
-
-  const handleDelete = (id: string) => {
-    setItems((current) => current.filter((item) => item.id !== id));
   };
 
-  const handleEdit = (item: MenuItem) => {
-    setEditingItem(item);
+  const handleEdit = (item: MenuItemEntity) => {
+    setEditingItemId(item.id);
     setIsModalOpen(true);
+  };
+
+  const handleSave = async (values: AddItemFormValues) => {
+    const payload = mapFormValuesToPayload(values, editingItemData?.displayOrder ?? 1);
+
+    try {
+      if (editingItemId) {
+        await updateMenuItem({ itemId: editingItemId, data: payload }).unwrap();
+        toast.success("Item updated successfully");
+      } else {
+        await addMenuItem(payload).unwrap();
+        toast.success("Item created successfully");
+      }
+
+      setIsModalOpen(false);
+      setEditingItemId(null);
+      refetchItems();
+    } catch {
+      toast.error(editingItemId ? "Failed to update item" : "Failed to create item");
+    }
   };
 
   return (
@@ -80,15 +191,18 @@ const Page = () => {
         <div className="flex flex-wrap items-center gap-2 rounded-full bg-[#FAEEE8] p-1.5 text-sm text-black/65">
           {categoryTabs.map((tab) => (
             <button
-              key={tab}
+              key={tab.id}
               type="button"
-              onClick={() => setActiveCategory(tab)}
+              onClick={() => {
+                setActiveCategoryId(tab.id);
+                setPage(1);
+              }}
               className={cn(
                 "rounded-full px-3 py-1.5 transition-colors",
-                activeCategory === tab ? "bg-white text-title shadow-sm" : "hover:text-title"
+                activeCategoryId === tab.id ? "bg-white text-title shadow-sm" : "hover:text-title"
               )}
             >
-              {tab}
+              {tab.name}
             </button>
           ))}
         </div>
@@ -98,9 +212,10 @@ const Page = () => {
           variant="outline"
           className="rounded-full border-[#F6C6A6] px-4 text-[#D94906]"
           onClick={() => {
-            setEditingItem(null);
+            setEditingItemId(null);
             setIsModalOpen(true);
           }}
+          disabled={isCategoriesLoading}
         >
           <Plus className="size-4" />
           Add a new item
@@ -108,7 +223,16 @@ const Page = () => {
       </div>
 
       <section className="rounded-[28px] bg-white">
-        <div className="overflow-x-auto rounded-2xl border border-black/8">
+        <div className="relative overflow-x-auto rounded-2xl border border-black/8">
+          {isItemsLoading ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-title shadow-sm">
+                <Loader2 className="size-4 animate-spin text-[#D94906]" />
+                Loading menu items...
+              </div>
+            </div>
+          ) : null}
+
           <table className="min-w-262.5 w-full border-separate border-spacing-0 text-sm">
             <thead className="bg-[#FAFAFA] text-left text-black/45">
               <tr>
@@ -125,86 +249,106 @@ const Page = () => {
             </thead>
 
             <tbody>
-              {filteredItems.map((item, index) => (
-                <tr
-                  key={item.id}
-                  className={cn(
-                    "border-b border-black/8 transition-colors hover:bg-black/3",
-                    index % 2 === 1 && "bg-black/2"
-                  )}
-                >
-                  <td className="px-4 py-3 text-title">{item.id}</td>
-                  <td className="px-4 py-3 text-title">{item.category}</td>
-                  <td className="px-4 py-3 text-title">{item.subCategory}</td>
-                  <td className="px-4 py-3 text-title">{item.defaultSize}</td>
-                  <td className="px-4 py-3 text-title">{item.price}</td>
-                  <td className="px-4 py-3 text-title">{item.sizeVariants}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant={item.deliveryAvailable ? "delivered" : "cancelled"}>
-                      {item.deliveryAvailable ? "AVAILABLE" : "NOT AVAILABLE"}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={item.itemAvailable ? "delivered" : "cancelled"}>
-                      {item.itemAvailable ? "AVAILABLE" : "NOT AVAILABLE"}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item.id)}
-                        className="text-[#FB6A6A] hover:text-[#ef4444]"
-                        aria-label={`Delete ${item.id}`}
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(item)}
-                        className="font-semibold text-[#1677FF] hover:underline"
-                      >
-                        <Edit3 className="mr-1 inline size-4 align-[-2px]" />
-                      </button>
-                    </div>
+              {items.map((item, index) => {
+                const defaultSizeVariant = getDefaultSizeVariant(item);
+                const defaultSize = defaultSizeVariant ? getSizeLabel(defaultSizeVariant.size) : "-";
+                const price = defaultSizeVariant ? formatCurrency(defaultSizeVariant.price) : "$0.00";
+                const sizeVariants = item.sizeVariants.map((variant) => getSizeLabel(variant.size)).join(", ");
+
+                return (
+                  <tr
+                    key={item.id}
+                    className={cn(
+                      "border-b border-black/8 transition-colors hover:bg-black/3",
+                      index % 2 === 1 && "bg-black/2"
+                    )}
+                  >
+                    <td className="px-4 py-3 text-title">{item.name}</td>
+                    <td className="px-4 py-3 text-title">{item.category?.name ?? "-"}</td>
+                    <td className="px-4 py-3 text-title">{item.subCategory?.name ?? "-"}</td>
+                    <td className="px-4 py-3 text-title">{defaultSize}</td>
+                    <td className="px-4 py-3 text-title">{price}</td>
+                    <td className="px-4 py-3 text-title">{sizeVariants || "-"}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={item.isDeliverable ? "delivered" : "cancelled"}>
+                        {item.isDeliverable ? "AVAILABLE" : "NOT AVAILABLE"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={item.isAvailable ? "delivered" : "cancelled"}>
+                        {item.isAvailable ? "AVAILABLE" : "NOT AVAILABLE"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item.id)}
+                          className="text-[#FB6A6A] hover:text-[#ef4444] disabled:opacity-50"
+                          aria-label={`Delete ${item.name}`}
+                          disabled={isDeletingItem}
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(item)}
+                          className="font-semibold text-[#1677FF] hover:underline"
+                        >
+                          <Edit3 className="mr-1 inline size-4 align-[-2px]" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {!isItemsLoading && items.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-description">
+                    No menu items found.
                   </td>
                 </tr>
-              ))}
+              ) : null}
             </tbody>
           </table>
         </div>
       </section>
 
-      {isModalOpen ? (
+      <CustomPagination
+        page={pagination?.page ?? page}
+        totalPages={pagination?.totalPages ?? 1}
+        onPageChange={setPage}
+        disabled={isItemsLoading}
+      />
+
+      {isModalOpen && !editingItemId ? (
         <AddItemModal
+          title="Add New item"
           open={isModalOpen}
-          item={editingItem}
+          isSaving={isAddingItem}
+          categories={categories as MenuCategory[]}
+          initialValues={addItemDefaults}
+          submitLabel="Add"
           onClose={() => {
             setIsModalOpen(false);
-            setEditingItem(null);
+            setEditingItemId(null);
           }}
-          onSave={(values: AddItemFormValues) => {
-            const nextItem: MenuItem = {
-              id: editingItem?.id ?? `#${4821 + items.length}`,
-              category: values.category,
-              subCategory: values.subCategory,
-              defaultSize: values.sizeVariantsEnabled ? "Medium" : "Medium",
-              price: values.sizeVariants[1]?.price ? `$${values.sizeVariants[1].price}` : "$0.00",
-              sizeVariants: values.sizeVariantsEnabled ? "SM, MD, L, XL" : "",
-              deliveryAvailable: values.deliveryAvailable,
-              itemAvailable: values.itemAvailable,
-            };
+          onSave={handleSave}
+        />
+      ) : null}
 
-            setItems((current) => {
-              if (editingItem) {
-                return current.map((item) => (item.id === editingItem.id ? nextItem : item));
-              }
-
-              return [nextItem, ...current];
-            });
+      {isModalOpen && editingItemId ? (
+        <EditItemModal
+          open={isModalOpen}
+          item={editingItemData ?? null}
+          categories={categories as MenuCategory[]}
+          isSaving={isUpdatingItem || isEditingItemLoading}
+          onClose={() => {
             setIsModalOpen(false);
-            setEditingItem(null);
+            setEditingItemId(null);
           }}
+          onSave={handleSave}
         />
       ) : null}
     </div>

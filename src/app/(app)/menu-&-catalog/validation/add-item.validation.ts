@@ -4,8 +4,8 @@ const priceSchema = z.string().min(1, "Price is required");
 
 export const addItemSchema = z.object({
   itemName: z.string().min(1, "Item name is required"),
-  category: z.string().min(1, "Category is required"),
-  subCategory: z.string().min(1, "Sub-category is required"),
+  categoryId: z.string().min(1, "Category is required"),
+  subCategoryId: z.string().min(1, "Sub-category is required"),
   description: z.string().min(1, "Description is required"),
   offeringItem: z.string().min(1, "Offering item is required"),
   sizeVariantsEnabled: z.boolean(),

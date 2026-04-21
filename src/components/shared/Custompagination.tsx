@@ -9,16 +9,12 @@ type CustomPaginationProps = {
   disabled?: boolean;
 };
 
-const Custompagination = ({
+const CustomPagination = ({
   page,
   totalPages,
   onPageChange,
   disabled = false,
 }: CustomPaginationProps) => {
-  if (totalPages <= 1) {
-    return null;
-  }
-
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
       <button
@@ -64,4 +60,4 @@ const Custompagination = ({
   );
 };
 
-export default Custompagination;
+export default CustomPagination;

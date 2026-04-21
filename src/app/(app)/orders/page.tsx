@@ -1,14 +1,13 @@
 "use client";
 import React from "react";
 import { Download, Loader2 } from "lucide-react";
-import Custompagination from "@/components/shared/Custompagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useGetOrdersQuery, useOrderDetailsQuery} from "@/redux/features/dashboard/dashboard.api";
 import type { GetOrdersQueryParams, OrderDetails, OrderStatusApi, OrderSummary} from "@/redux/features/dashboard/dashboard.type";
-
 import OrderDetailsModal from "./OrderDetailsModal";
+import CustomPagination from "@/components/shared/CustomPagination";
 
 const statusTabs: Array<"ALL" | OrderStatusApi> = [
     "ALL",
@@ -251,7 +250,7 @@ const Page = () => {
                 </div>
 
                 <div className="mt-4">
-                    <Custompagination
+                    <CustomPagination
                         page={pagination?.page ?? page}
                         totalPages={pagination?.totalPages ?? 1}
                         onPageChange={setPage}
