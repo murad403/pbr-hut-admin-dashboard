@@ -1,16 +1,15 @@
-import React from 'react'
-import logo from "@/assets/logo/logo.png";
+import React from 'react';
 import Image from 'next/image';
 
-const layout = ({ children }: { children: React.ReactNode }) => {
+import logo from '@/assets/logo/logo.png';
+
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className='bg-[#F9F8F5] min-h-screen justify-center items-center'>
-
-      <Image src={logo} alt="Logo" width={319} height={163} className='object-cover' />
-
-      {children}
+    <main className=" bg-[#F9F8F5] px-4 sm:px-0">
+      <div className="mx-auto w-full max-w-2xl text-center flex justify-center items-center min-h-screen flex-col">
+        <Image src={logo} alt="PBR Hut" width={236} height={121} className="mx-auto h-auto w-56 sm:w-60" priority />
+        <div className="mx-auto mt-8 w-full max-w-xl text-left">{children}</div>
+      </div>
     </main>
-  )
+  );
 }
-
-export default layout
