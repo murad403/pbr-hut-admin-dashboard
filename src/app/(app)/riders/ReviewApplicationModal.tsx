@@ -97,6 +97,10 @@ export default function ReviewApplicationModal({ application, onClose }: ReviewA
             <p className="text-sm font-semibold text-description mb-1">NID Status</p>
             <p className="text-sm text-title font-medium">{application.nidStatus}</p>
           </div>
+          <div>
+            <p className="text-sm font-semibold text-description mb-1">Rider ID</p>
+            <p className="text-sm text-title font-medium">{application.userId}</p>
+          </div>
         </div>
 
         {/* Government ID Card */}

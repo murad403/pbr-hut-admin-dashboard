@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useDeleteMenuItemMutation, useGetAllMenuItemsQuery, useGetCategoriesQuery } from "@/redux/features/dashboard/dashboard.api";
 import type { GetMenuItemsQueryParams, MenuItemEntity, MenuSize } from "@/redux/features/dashboard/dashboard.type";
 import CustomPagination from "@/components/shared/CustomPagination";
+import Image from "next/image";
 
 
 
@@ -249,6 +250,10 @@ const Page = () => {
               >
                 <X className="size-4" />
               </button>
+            </div>
+
+            <div className="flex justify-center items-center mb-6">
+              <Image src={selectedItem.imageUrl} alt={selectedItem.name} width={200} height={200} className="rounded-xl"/>
             </div>
 
             <div className="space-y-3 text-sm">

@@ -55,6 +55,10 @@ export default function ViewRiderProfileModal({ rider, onClose }: ViewRiderProfi
             <p className="text-sm text-title font-medium">{rider.h3Index}</p>
           </div>
           <div>
+            <p className="text-sm font-semibold text-description mb-1">Rider ID</p>
+            <p className="text-sm text-title font-medium">{rider.userId}</p>
+          </div>
+          <div>
             <p className="text-sm font-semibold text-description mb-1">ID Verified</p>
             <div>
               <span className="inline-block px-2 py-1 rounded-full text-sm font-semibold bg-emerald-600 text-white">
