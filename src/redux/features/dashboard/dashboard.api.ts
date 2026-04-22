@@ -213,7 +213,7 @@ const dashboardApi = baseApi.injectEndpoints({
         updateProfile: builder.mutation<RestaurantProfile, UpdateProfilePayload>({
             query: (data) => {
                 return {
-                    url: `/restaurant/primary`,
+                    url: `/restaurant/update-primary`,
                     method: "POST",
                     body: data
                 }
