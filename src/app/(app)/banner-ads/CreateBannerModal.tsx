@@ -119,13 +119,13 @@ export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
                 value={ctaTitle}
                 onChange={(event) => setCtaTitle(event.target.value)}
                 placeholder="e.g. Shop Now"
-                className="h-10 w-full rounded-md border border-black/10 bg-[#E8EBEF] px-3 text-sm text-title outline-none placeholder:text-black/35"
+                className="h-10 w-full rounded-md border border-black/10 bg-white px-3 text-sm text-title outline-none placeholder:text-black/35"
               />
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase text-black/60">CTA Button Color</label>
-              <div className="flex h-10 items-center rounded-md border border-black/10 bg-[#E8EBEF] px-2">
+              <div className="flex h-10 items-center rounded-md border border-black/10 bg-white px-2">
                 {ctaColors.map((color) => (
                   <button
                     key={color}
@@ -151,7 +151,7 @@ export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
                 min={1}
                 value={order}
                 onChange={(event) => setOrder(Number(event.target.value) || 1)}
-                className="h-10 w-full rounded-md border border-black/10 bg-[#E8EBEF] px-3 text-sm text-title outline-none"
+                className="h-10 w-full rounded-md border border-black/10 bg-white px-3 text-sm text-title outline-none"
               />
             </div>
 
@@ -160,7 +160,7 @@ export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
               <select
                 value={targetType}
                 onChange={(event) => setTargetType(event.target.value as 'ITEM' | 'URL')}
-                className="h-10 w-full rounded-md border border-black/10 bg-[#E8EBEF] px-3 text-sm text-title outline-none"
+                className="h-10 w-full rounded-md border border-black/10 bg-white px-3 text-sm text-title outline-none"
               >
                 <option value="ITEM">ITEM</option>
                 <option value="URL">URL</option>
@@ -174,7 +174,7 @@ export default function CreateBannerModal({ onClose }: CreateBannerModalProps) {
               value={targetData}
               onChange={(event) => setTargetData(event.target.value)}
               placeholder={targetType === 'ITEM' ? 'Item ID' : 'https://example.com'}
-              className="h-10 w-full rounded-md border border-black/10 bg-[#E8EBEF] px-3 text-sm text-title outline-none placeholder:text-black/35"
+              className="h-10 w-full rounded-md border border-black/10 bg-white px-3 text-sm text-title outline-none placeholder:text-black/35"
             />
           </div>
 

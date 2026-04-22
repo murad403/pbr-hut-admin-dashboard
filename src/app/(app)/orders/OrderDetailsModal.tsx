@@ -111,7 +111,7 @@ const OrderDetailsModal = ({ order, isLoading = false, onClose }: OrderDetailsMo
               <textarea
                 value={order.note}
                 readOnly
-                className="min-h-28 w-full rounded-2xl border border-black/10 bg-[#FAFAFA] p-4 text-sm text-title outline-none"
+                className="min-h-28 w-full rounded-2xl border border-black/10 bg-white p-4 text-sm text-title outline-none"
                 placeholder="E.g., No onions, extra napkins..."
               />
             </div>

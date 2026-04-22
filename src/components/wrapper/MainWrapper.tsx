@@ -1,12 +1,10 @@
 "use client";
-
 import React from "react";
-import { Bell, Search } from "lucide-react";
+import { Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
-
 import AdminSidebar from "../shared/AdminSidebar";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+
 
 const pageTitleByPath: Record<string, string> = {
     "/": "Dashboard",
@@ -14,6 +12,7 @@ const pageTitleByPath: Record<string, string> = {
     "/menu-&-catalog": "Menu & Catalog",
     "/banner-ads": "Banner Ads",
     "/riders": "Manage Riders",
+    "/category": "Manage Categories",
     "/settings": "Settings",
 };
 

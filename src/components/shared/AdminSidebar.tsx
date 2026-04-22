@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/logo/logo.png"
 import { RiHomeSmile2Line } from "react-icons/ri";
 import { IoCartOutline } from "react-icons/io5";
-import { MdTune } from "react-icons/md";
+import { MdOutlineCategory, MdTune } from "react-icons/md";
 import { clearAllAuthCookies } from "@/utils/auth";
 import { toast } from "sonner";
 
@@ -28,6 +28,7 @@ const menuItems = [
   { label: "Menu & Catalog", icon: SquareChartGantt, href: "/menu-&-catalog" },
   { label: "Banner Ads", icon: WalletCards, href: "/banner-ads" },
   { label: "Riders", icon: Bike, href: "/riders" },
+  { label: "Category", icon: MdOutlineCategory, href: "/category" },
   { label: "Settings", icon: MdTune, href: "/settings" },
 ];
 

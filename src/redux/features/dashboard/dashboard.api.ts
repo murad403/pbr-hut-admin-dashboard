@@ -1,5 +1,5 @@
 import baseApi from "@/redux/api/baseApi";
-import type { ApproveRiderPayload, BannerAd, DashboardApiResponse, DashboardData, DeclineRiderPayload, GetMenuItemsQueryParams, GetOrdersQueryParams, GetRidersQueryParams, MenuCategory, MenuItemEntity, MenuItemsResponse, MenuItemsResponseEnvelope, OrderDetails, OrderDetailsResponseEnvelope, OrdersResponse, OrdersResponseEnvelope, RiderNidActionEntity, RiderNidActionResponseEnvelope, RidersResponse, RidersResponseEnvelope, RestaurantProfile, RestaurantProfileResponseEnvelope, UpdateProfilePayload, UpsertMenuItemWithImagePayload } from "./dashboard.type";
+import type { ApproveRiderPayload, BannerAd, DashboardApiResponse, DashboardData, DeclineRiderPayload, GetMenuItemsQueryParams, GetOrdersQueryParams, GetRidersQueryParams, MenuCategory, MenuItemEntity, MenuItemsResponse, MenuItemsResponseEnvelope, OrderDetails, OrderDetailsResponseEnvelope, OrdersResponse, OrdersResponseEnvelope, RiderNidActionEntity, RiderNidActionResponseEnvelope, RidersResponse, RidersResponseEnvelope, RestaurantProfile, RestaurantProfileResponseEnvelope, UpdateProfilePayload, UpsertMenuItemWithImagePayload, Category, SubCategory } from "./dashboard.type";
 
 
 const dashboardApi = baseApi.injectEndpoints({
@@ -221,6 +221,64 @@ const dashboardApi = baseApi.injectEndpoints({
             transformResponse: (response: RestaurantProfileResponseEnvelope) => response.data,
             invalidatesTags: ["profile"],
         }),
+
+
+        listCategories: builder.query<Category[], void>({
+            query: () => ({ url: "/categories", method: "GET" }),
+            transformResponse: (res: DashboardApiResponse<Category[]>) => res.data,
+            providesTags: ["category"],
+        }),
+        createCategory: builder.mutation<Category, { name: string }>({
+            query: (body) => ({ url: "/categories", method: "POST", body }),
+            transformResponse: (res: DashboardApiResponse<Category>) => res.data,
+            invalidatesTags: ["category"],
+        }),
+        updateCategory: builder.mutation<Category, { id: string; name: string }>({
+            query: ({ id, name }) => ({
+                url: `/categories/${id}`,
+                method: "PATCH",
+                body: { name },
+            }),
+            transformResponse: (res: DashboardApiResponse<Category>) => res.data,
+            invalidatesTags: ["category"],
+        }),
+        deleteCategory: builder.mutation<null, string>({
+            query: (id) => ({ url: `/categories/${id}`, method: "DELETE" }),
+            transformResponse: () => null,
+            invalidatesTags: ["category"],
+        }),
+        createSubCategory: builder.mutation<
+            SubCategory,
+            { categoryId: string; name: string }
+        >({
+            query: ({ categoryId, name }) => ({
+                url: `/categories/${categoryId}/sub-categories`,
+                method: "POST",
+                body: { name },
+            }),
+            transformResponse: (res: DashboardApiResponse<SubCategory>) => res.data,
+            invalidatesTags: ["category"],
+        }),
+        updateSubCategory: builder.mutation<
+            SubCategory,
+            { subId: string; name: string }
+        >({
+            query: ({ subId, name }) => ({
+                url: `/categories/sub-categories/${subId}`,
+                method: "PATCH",
+                body: { name },
+            }),
+            transformResponse: (res: DashboardApiResponse<SubCategory>) => res.data,
+            invalidatesTags: ["category"],
+        }),
+        deleteSubCategory: builder.mutation<null, string>({
+            query: (subId) => ({
+                url: `/categories/sub-categories/${subId}`,
+                method: "DELETE",
+            }),
+            transformResponse: () => null,
+            invalidatesTags: ["category"],
+        }),
     })
 })
 
@@ -244,4 +302,11 @@ export const {
     useDeclineRiderMutation,
     useGetProfileQuery,
     useUpdateProfileMutation,
+    useListCategoriesQuery,
+    useCreateCategoryMutation,
+    useUpdateCategoryMutation,
+    useDeleteCategoryMutation,
+    useCreateSubCategoryMutation,
+    useUpdateSubCategoryMutation,
+    useDeleteSubCategoryMutation,
 } = dashboardApi;
