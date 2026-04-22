@@ -95,33 +95,7 @@ export default function SettingsPage() {
   const [updateProfile, { isLoading: isUpdatingProfile }] = useUpdateProfileMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
 
-  const profileFormValues = React.useMemo<SettingsFormValues | null>(() => {
-    if (!profileData) {
-      return null;
-    }
-
-    return {
-      name: profileData.name,
-      address: profileData.address,
-      latitude: String(profileData.latitude),
-      longitude: String(profileData.longitude),
-      openingHour: profileData.openingHour,
-      closingHour: profileData.closingHour,
-      deliveryRadius: String(profileData.deliveryRadius),
-      baseDeliveryFee: String(profileData.baseDeliveryFee),
-      minimumOrderAmountCOD: String(profileData.minimumOrderAmountCOD),
-      isCODEnabled: profileData.isCODEnabled,
-    };
-  }, [profileData]);
-
-  const {
-    register,
-    control,
-    setValue,
-    handleSubmit,
-    reset,
-    formState: { errors: settingsErrors },
-  } = useForm<SettingsFormValues>({
+  const { register, control, setValue, handleSubmit, reset, formState: { errors: settingsErrors } } = useForm<SettingsFormValues>({
     defaultValues: {
       name: '',
       address: '',
@@ -132,7 +106,7 @@ export default function SettingsPage() {
       deliveryRadius: '',
       baseDeliveryFee: '',
       minimumOrderAmountCOD: '',
-      isCODEnabled: true,
+      isCODEnabled: false,
     },
   });
 
@@ -151,12 +125,21 @@ export default function SettingsPage() {
   const isCODEnabled = useWatch({ control, name: 'isCODEnabled' });
 
   React.useEffect(() => {
-    if (!profileFormValues) {
-      return;
-    }
+    if (!profileData) return;
 
-    reset(profileFormValues);
-  }, [profileFormValues, reset]);
+    reset({
+      name: profileData.name,
+      address: profileData.address,
+      latitude: String(profileData.latitude),
+      longitude: String(profileData.longitude),
+      openingHour: profileData.openingHour,
+      closingHour: profileData.closingHour,
+      deliveryRadius: String(profileData.deliveryRadius),
+      baseDeliveryFee: String(profileData.baseDeliveryFee),
+      minimumOrderAmountCOD: String(profileData.minimumOrderAmountCOD),
+      isCODEnabled: profileData.isCODEnabled,
+    });
+  }, [profileData, reset]);
 
   const onSubmitProfile = async (values: SettingsFormValues) => {
     try {
@@ -192,6 +175,14 @@ export default function SettingsPage() {
       toast.error(getErrorMessage(error));
     }
   };
+
+  if (isProfileLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-black/40" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-3 pb-6">
