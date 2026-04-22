@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
@@ -6,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Upload, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Loader2, Upload, Plus, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAddMenuItemMutation, useGetCategoriesQuery } from "@/redux/features/dashboard/dashboard.api";
@@ -71,7 +72,7 @@ export default function AddMenuItemPage() {
         setValue,
         formState: { errors, isSubmitting },
     } = useForm<FormValues>({
-        resolver: zodResolver(schema),
+        resolver: zodResolver(schema) as any,
         defaultValues: {
             name:                   "",
             description:            "",
@@ -261,7 +262,7 @@ export default function AddMenuItemPage() {
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex w-full items-center justify-center rounded-md border-2 border-dashed border-black/10 bg-black/[0.02] py-6 transition-colors hover:border-black/20 hover:bg-black/[0.04]"
+                            className="flex w-full items-center justify-center rounded-md border-2 border-dashed border-black/10 bg-black/2 py-6 transition-colors hover:border-black/20 hover:bg-black/4"
                         >
                             {imagePreview ? (
                                 <div className="flex flex-col items-center gap-2">
@@ -353,7 +354,7 @@ export default function AddMenuItemPage() {
                                     <button
                                         type="button"
                                         onClick={() => extrasField.remove(index)}
-                                        className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-red-400 hover:bg-red-50"
+                                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-red-400 hover:bg-red-50"
                                     >
                                         <Trash2 className="size-4" />
                                     </button>
@@ -405,7 +406,7 @@ export default function AddMenuItemPage() {
                                                 type="button"
                                                 onClick={() => f.onChange(!f.value)}
                                                 className={cn(
-                                                    "h-9 flex-shrink-0 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+                                                    "h-9 shrink-0 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
                                                     f.value
                                                         ? "border-[#21B26B]/30 bg-[#21B26B]/10 text-[#21B26B]"
                                                         : "border-black/10 bg-white text-black/30 hover:border-black/20 hover:text-black/50"
@@ -418,7 +419,7 @@ export default function AddMenuItemPage() {
                                     <button
                                         type="button"
                                         onClick={() => sideOptionsField.remove(index)}
-                                        className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-red-400 hover:bg-red-50"
+                                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-red-400 hover:bg-red-50"
                                     >
                                         <Trash2 className="size-4" />
                                     </button>
@@ -462,7 +463,7 @@ export default function AddMenuItemPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="rounded-[16px] border border-black/5 bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+        <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
             <p className="mb-3 text-[13px] font-semibold text-[#151515]">{title}</p>
             <div className="space-y-3">{children}</div>
         </div>
@@ -481,16 +482,16 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 
 function Toggle({ title, checked, onToggle }: { title: string; checked: boolean; onToggle: (v: boolean) => void }) {
     return (
-        <div className="flex items-center justify-between gap-3 rounded-[12px] border border-black/8 px-3 py-2.5">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-black/8 px-3 py-2.5">
             <p className="text-[13px] font-medium text-[#252525]">{title}</p>
             <button
                 type="button"
                 onClick={() => onToggle(!checked)}
                 aria-pressed={checked}
                 className={cn(
-                    "relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors",
+                    "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
                     checked ? "bg-[#21B26B]" : "bg-[#E5DDD9]"
-                )}
+                )}shrink-0
             >
                 <span className={cn(
                     "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.18)] transition-transform",

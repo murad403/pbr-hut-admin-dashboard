@@ -271,7 +271,7 @@ function CategoryCard({
         </div>
 
         {open ? (
-          <div className="border-t border-black/8 bg-black/[0.015] px-4 pb-4 pt-3">
+          <div className="border-t border-black/8 bg-black/1.5 px-4 pb-4 pt-3">
             {subCount === 0 && !addingSub ? (
               <p className="mb-3 px-2 text-xs text-description">No sub-categories yet.</p>
             ) : null}
