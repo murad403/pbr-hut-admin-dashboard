@@ -388,8 +388,8 @@ export type UpdateProfilePayload = {
 	openingHour: string;
 	closingHour: string;
 	deliveryRadius: number;
-	baseDeliveryFee: number;
-	minimumOrderAmountCOD: number;
+	baseDeliveryFee: string;
+	minimumOrderAmountCOD: string;
 	isCODEnabled: boolean;
 };
 

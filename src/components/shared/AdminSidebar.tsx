@@ -100,11 +100,10 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile, onLogout}:
         })}
       </nav>
 
-      <div className="mt-auto flex items-end justify-between gap-2 pt-5">
+      <div className="mt-auto flex items-center justify-between gap-2 pt-5">
         {!collapsed && (
           <div>
             <p className="text-sm text-title">Logout</p>
-            <p className="text-xs text-black/50">admin@pbrhut.com</p>
           </div>
         )}
 
@@ -112,7 +111,7 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile, onLogout}:
           type="button"
           variant="ghost"
           size="icon"
-          className={cn("text-[#E5523F] hover:bg-[#E5523F]/10", collapsed && "mx-auto")}
+          className={cn("text-[#E5523F] hover:bg-[#E5523F]/10 cursor-pointer", collapsed && "mx-auto")}
           aria-label="Logout"
           onClick={onLogout}
         >

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useGetOrdersQuery, useOrderDetailsQuery} from "@/redux/features/dashboard/dashboard.api";
 import type { GetOrdersQueryParams, OrderDetails, OrderStatusApi, OrderSummary} from "@/redux/features/dashboard/dashboard.type";
+import { getAccessToken } from "@/utils/auth";
 import OrderDetailsModal from "./OrderDetailsModal";
 import CustomPagination from "@/components/shared/CustomPagination";
 
@@ -127,7 +128,10 @@ const Page = () => {
     };
 
     const handleDownloadCsv = () => {
-        window.location.href = "https://plbck79v-45598.inc1.devtunnels.ms/api/v1/admin/orders/download/csv";
+        const token = getAccessToken() ?? "";
+        const csvUrl = new URL("https://plbck79v-45598.inc1.devtunnels.ms/api/v1/admin/orders/download/csv/");
+        csvUrl.searchParams.set("token", token);
+        window.location.href = csvUrl.toString();
     };
 
     return (

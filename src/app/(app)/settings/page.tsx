@@ -95,6 +95,25 @@ export default function SettingsPage() {
   const [updateProfile, { isLoading: isUpdatingProfile }] = useUpdateProfileMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
 
+  const profileFormValues = React.useMemo<SettingsFormValues | null>(() => {
+    if (!profileData) {
+      return null;
+    }
+
+    return {
+      name: profileData.name,
+      address: profileData.address,
+      latitude: String(profileData.latitude),
+      longitude: String(profileData.longitude),
+      openingHour: profileData.openingHour,
+      closingHour: profileData.closingHour,
+      deliveryRadius: String(profileData.deliveryRadius),
+      baseDeliveryFee: String(profileData.baseDeliveryFee),
+      minimumOrderAmountCOD: String(profileData.minimumOrderAmountCOD),
+      isCODEnabled: profileData.isCODEnabled,
+    };
+  }, [profileData]);
+
   const {
     register,
     control,
@@ -132,23 +151,12 @@ export default function SettingsPage() {
   const isCODEnabled = useWatch({ control, name: 'isCODEnabled' });
 
   React.useEffect(() => {
-    if (!profileData) {
+    if (!profileFormValues) {
       return;
     }
 
-    reset({
-      name: profileData.name,
-      address: profileData.address,
-      latitude: String(profileData.latitude),
-      longitude: String(profileData.longitude),
-      openingHour: profileData.openingHour,
-      closingHour: profileData.closingHour,
-      deliveryRadius: String(profileData.deliveryRadius),
-      baseDeliveryFee: String(profileData.baseDeliveryFee),
-      minimumOrderAmountCOD: String(profileData.minimumOrderAmountCOD),
-      isCODEnabled: profileData.isCODEnabled,
-    });
-  }, [profileData, reset]);
+    reset(profileFormValues);
+  }, [profileFormValues, reset]);
 
   const onSubmitProfile = async (values: SettingsFormValues) => {
     try {
@@ -160,8 +168,8 @@ export default function SettingsPage() {
         openingHour: values.openingHour,
         closingHour: values.closingHour,
         deliveryRadius: toNumber(values.deliveryRadius),
-        baseDeliveryFee: toNumber(values.baseDeliveryFee),
-        minimumOrderAmountCOD: toNumber(values.minimumOrderAmountCOD),
+        baseDeliveryFee: values.baseDeliveryFee.trim(),
+        minimumOrderAmountCOD: values.minimumOrderAmountCOD.trim(),
         isCODEnabled: values.isCODEnabled,
       }).unwrap();
 
