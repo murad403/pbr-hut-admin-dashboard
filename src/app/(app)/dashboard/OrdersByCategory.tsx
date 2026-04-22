@@ -80,11 +80,9 @@ const OrdersByCategory = ({ ordersByCategory }: OrdersByCategoryProps) => {
 
   return (
     <Card>
-      <CardHeader className="p-6 pb-0 sm:p-7 sm:pb-0">
-        <CardTitle className="text-2xl font-semibold tracking-tight text-white/10 sm:text-[28px]">
-          ORDERS BY CATEGORY
-        </CardTitle>
-      </CardHeader>
+      <CardHeader>
+              <CardTitle>ORDERS BY CATEGORY</CardTitle>
+            </CardHeader>
 
       <CardContent className="flex min-h-105 items-center justify-center p-6 pt-0 sm:min-h-130 sm:p-7 sm:pt-0">
         <PieChart width={360} height={360}>

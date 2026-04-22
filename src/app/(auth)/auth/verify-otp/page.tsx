@@ -150,7 +150,7 @@ export default function VerifyOtpPage() {
                 <button
                     type="submit"
                     disabled={isVerifying}
-                    className="h-12 w-full rounded-full bg-[#D94906] text-base font-semibold text-white hover:bg-[#c34105] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="h-12 w-full rounded-full bg-[#D94906] text-base font-semibold text-white hover:bg-[#c34105] disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
                 >
                     {isVerifying ? 'Verifying...' : 'Verify'}
                 </button>
@@ -159,7 +159,7 @@ export default function VerifyOtpPage() {
                     type="button"
                     onClick={handleResend}
                     disabled={secondsLeft > 0 || isResending}
-                    className="mx-auto block text-base font-semibold text-[#D94906] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mx-auto block text-base font-semibold text-[#D94906] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 >
                     {secondsLeft > 0 ? `Resend in ${secondsLeft}s` : isResending ? 'Resending...' : 'Resend'}
                 </button>

@@ -70,6 +70,7 @@ export const config = {
         "/menu-&-catalog/:path*",
         "/banner-ads/:path*",
         "/riders/:path*",
+        "/category/:path*",
         "/settings/:path*"
     ]
 };
