@@ -228,16 +228,16 @@ const dashboardApi = baseApi.injectEndpoints({
             transformResponse: (res: DashboardApiResponse<Category[]>) => res.data,
             providesTags: ["category"],
         }),
-        createCategory: builder.mutation<Category, { name: string }>({
+        createCategory: builder.mutation<Category, { name: string; hasSizeVariants: boolean }>({
             query: (body) => ({ url: "/categories", method: "POST", body }),
             transformResponse: (res: DashboardApiResponse<Category>) => res.data,
             invalidatesTags: ["category"],
         }),
-        updateCategory: builder.mutation<Category, { id: string; name: string }>({
-            query: ({ id, name }) => ({
+        updateCategory: builder.mutation<Category, { id: string; name: string; hasSizeVariants: boolean  }>({
+            query: ({ id, name, hasSizeVariants }) => ({
                 url: `/categories/${id}`,
                 method: "PATCH",
-                body: { name },
+                body: { name, hasSizeVariants },
             }),
             transformResponse: (res: DashboardApiResponse<Category>) => res.data,
             invalidatesTags: ["category"],
@@ -249,24 +249,24 @@ const dashboardApi = baseApi.injectEndpoints({
         }),
         createSubCategory: builder.mutation<
             SubCategory,
-            { categoryId: string; name: string }
+            { categoryId: string; name: string; hasSizeVariants: boolean }
         >({
-            query: ({ categoryId, name }) => ({
+            query: ({ categoryId, name, hasSizeVariants }) => ({
                 url: `/categories/${categoryId}/sub-categories`,
                 method: "POST",
-                body: { name },
+                body: { name, hasSizeVariants },
             }),
             transformResponse: (res: DashboardApiResponse<SubCategory>) => res.data,
             invalidatesTags: ["category"],
         }),
         updateSubCategory: builder.mutation<
             SubCategory,
-            { subId: string; name: string }
+            { subId: string; name: string; hasSizeVariants: boolean }
         >({
-            query: ({ subId, name }) => ({
+            query: ({ subId, name, hasSizeVariants }) => ({
                 url: `/categories/sub-categories/${subId}`,
                 method: "PATCH",
-                body: { name },
+                body: { name, hasSizeVariants },
             }),
             transformResponse: (res: DashboardApiResponse<SubCategory>) => res.data,
             invalidatesTags: ["category"],

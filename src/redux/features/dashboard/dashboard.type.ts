@@ -399,10 +399,12 @@ export interface SubCategory {
   id: string;
   name: string;
   categoryId?: string;
+  hasSizeVariants: boolean;
 }
 
 export interface Category {
   id: string;
   name: string;
+  hasSizeVariants: boolean;
   subCategories: SubCategory[];
 }

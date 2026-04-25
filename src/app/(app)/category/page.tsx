@@ -58,20 +58,49 @@ function ConfirmDeleteModal({
   );
 }
 
+function SizeVariantsToggle({
+  value,
+  onChange,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+        value ? "bg-[#D94906]" : "bg-black/15"
+      }`}
+      title="Has size variants"
+      aria-label="Toggle size variants"
+    >
+      <span
+        className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          value ? "translate-x-4" : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
 function InlineInput({
   defaultValue = "",
+  defaultHasSizeVariants = false,
   placeholder = "Enter name...",
   onConfirm,
   onCancel,
   loading,
 }: {
   defaultValue?: string;
+  defaultHasSizeVariants?: boolean;
   placeholder?: string;
-  onConfirm: (v: string) => void;
+  onConfirm: (v: string, hasSizeVariants: boolean) => void;
   onCancel: () => void;
   loading?: boolean;
 }) {
   const [val, setVal] = useState(defaultValue);
+  const [hasSizeVariants, setHasSizeVariants] = useState(defaultHasSizeVariants);
 
   return (
     <span className="inline-flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>
@@ -81,13 +110,17 @@ function InlineInput({
         placeholder={placeholder}
         onChange={(event) => setVal(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === "Enter") onConfirm(val);
+          if (event.key === "Enter") onConfirm(val, hasSizeVariants);
           if (event.key === "Escape") onCancel();
         }}
         className="h-10 w-48 rounded-md border border-black/10 bg-white px-3 text-sm text-title outline-none placeholder:text-black/40 focus-visible:ring-2 focus-visible:ring-black/10"
       />
+      <span className="flex items-center gap-1.5" title="Has size variants">
+        <SizeVariantsToggle value={hasSizeVariants} onChange={setHasSizeVariants} />
+        <span className="text-xs text-description">Sizes</span>
+      </span>
       <button
-        onClick={() => onConfirm(val)}
+        onClick={() => onConfirm(val, hasSizeVariants)}
         disabled={loading || !val.trim()}
         className="flex items-center gap-1.5 rounded-md bg-[#D94906] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#c34105] disabled:cursor-not-allowed disabled:opacity-50"
       >
@@ -118,9 +151,10 @@ function SubCategoryRow({ sub }: { sub: SubCategory }) {
           {editing ? (
             <InlineInput
               defaultValue={sub.name}
-              onConfirm={async (name) => {
+              defaultHasSizeVariants={sub.hasSizeVariants}
+              onConfirm={async (name, hasSizeVariants) => {
                 if (!name.trim()) return;
-                await updateSub({ subId: sub.id, name: name.trim() });
+                await updateSub({ subId: sub.id, name: name.trim(), hasSizeVariants });
                 setEditing(false);
               }}
               onCancel={() => setEditing(false)}
@@ -132,7 +166,12 @@ function SubCategoryRow({ sub }: { sub: SubCategory }) {
         </div>
 
         {!editing ? (
-          <div className="ml-2 flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="ml-2 flex shrink-0 items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+            {sub.hasSizeVariants ? (
+              <span className="rounded-full bg-[#D94906]/10 px-2 py-0.5 text-[10px] font-medium text-[#D94906]">
+                Sizes
+              </span>
+            ) : null}
             <button
               onClick={() => setEditing(true)}
               className="rounded-lg p-1.5 text-description transition-colors hover:bg-[#D94906]/10 hover:text-[#D94906]"
@@ -179,9 +218,9 @@ function AddSubCategoryRow({
     <div className="px-2 py-2">
       <InlineInput
         placeholder="Sub-category name..."
-        onConfirm={async (name) => {
+        onConfirm={async (name, hasSizeVariants) => {
           if (!name.trim()) return;
-          await createSub({ categoryId, name: name.trim() });
+          await createSub({ categoryId, name: name.trim(), hasSizeVariants });
           onDone();
         }}
         onCancel={onDone}
@@ -227,9 +266,10 @@ function CategoryCard({
             <span className="flex-1">
               <InlineInput
                 defaultValue={category.name}
-                onConfirm={async (name) => {
+                defaultHasSizeVariants={category.hasSizeVariants}
+                onConfirm={async (name, hasSizeVariants) => {
                   if (!name.trim()) return;
-                  await updateCat({ id: category.id, name: name.trim() });
+                  await updateCat({ id: category.id, name: name.trim(), hasSizeVariants });
                   setEditName(false);
                 }}
                 onCancel={() => setEditName(false)}
@@ -240,9 +280,16 @@ function CategoryCard({
             <span className="flex-1 truncate text-sm font-semibold tracking-wide text-title">{category.name}</span>
           )}
 
-          <span className="shrink-0 rounded-full border border-black/10 bg-black/3 px-2.5 py-0.5 text-[11px] font-medium text-description">
-            {subCount} {subCount === 1 ? "sub" : "subs"}
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            {category.hasSizeVariants ? (
+              <span className="rounded-full bg-[#D94906]/10 px-2 py-0.5 text-[10px] font-medium text-[#D94906]">
+                Sizes
+              </span>
+            ) : null}
+            <span className="rounded-full border border-black/10 bg-black/3 px-2.5 py-0.5 text-[11px] font-medium text-description">
+              {subCount} {subCount === 1 ? "sub" : "subs"}
+            </span>
+          </div>
 
           {!editName ? (
             <div
@@ -321,9 +368,9 @@ function AddCategoryBar() {
         <span className="shrink-0 text-sm text-description">New category:</span>
         <InlineInput
           placeholder="e.g. Pizzas"
-          onConfirm={async (name) => {
+          onConfirm={async (name, hasSizeVariants) => {
             if (!name.trim()) return;
-            await createCat({ name: name.trim() });
+            await createCat({ name: name.trim(), hasSizeVariants });
             setOpen(false);
           }}
           onCancel={() => setOpen(false)}
@@ -335,7 +382,7 @@ function AddCategoryBar() {
 
   return (
     <Button
-    variant="outline"
+      variant="outline"
       onClick={() => setOpen(true)}
       className="rounded-full border-[#F6C6A6] px-4 text-[#D94906]"
     >
