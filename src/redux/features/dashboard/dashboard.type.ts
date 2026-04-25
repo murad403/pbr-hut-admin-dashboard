@@ -222,6 +222,7 @@ export type MenuItemEntity = {
 	hasExtras: boolean;
 	categoryId: string;
 	subCategoryId: string;
+	basePrice: number | null;
 	createdAt: string;
 	updatedAt: string;
 	deletedAt: string | null;
@@ -267,6 +268,7 @@ export type UpsertMenuItemPayload = {
 	displayOrder: number;
 	isDeliverable: boolean;
 	isAvailable: boolean;
+	basePrice?: number;          
 	allowCustomNote: boolean;
 	isSideFree: boolean;
 	isExtrasOptional: boolean;
