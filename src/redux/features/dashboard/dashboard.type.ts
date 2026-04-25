@@ -173,11 +173,13 @@ export type GetOrdersQueryParams = {
 export type MenuSubCategory = {
 	id: string;
 	name: string;
+	hasSizeVariants?: boolean;
 };
 
 export type MenuCategory = {
 	id: string;
 	name: string;
+	hasSizeVariants?: boolean;
 	subCategories: MenuSubCategory[];
 };
 

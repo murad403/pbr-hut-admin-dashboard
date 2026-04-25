@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/immutability */
 "use client";
 
 import React from "react";
@@ -5,7 +7,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Controller, useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Upload, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Loader2, Upload, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
@@ -30,6 +32,9 @@ const schema = z.object({
   isSideFree: z.boolean().default(true),
   isExtrasOptional: z.boolean().default(true),
   image: z.instanceof(File).optional(),
+  // simple mode (hasSizeVariants: false)
+  basePrice: z.coerce.number().min(0, "Must be ≥ 0").optional(),
+  // full mode toggles (hasSizeVariants: true)
   sizeVariantsEnabled: z.boolean().default(false),
   addExtrasEnabled: z.boolean().default(false),
   addSideOptionsEnabled: z.boolean().default(false),
@@ -79,6 +84,7 @@ const defaultValues: FormValues = {
   isSideFree: true,
   isExtrasOptional: true,
   image: undefined,
+  basePrice: undefined,
   sizeVariantsEnabled: false,
   addExtrasEnabled: false,
   addSideOptionsEnabled: false,
@@ -122,10 +128,12 @@ const Page = () => {
     handleSubmit,
     reset,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = form;
 
   const categoryId = useWatch({ control, name: "categoryId", defaultValue: "" });
+  const subCategoryId = useWatch({ control, name: "subCategoryId", defaultValue: "" });
   const sizeVariantsEnabled = useWatch({ control, name: "sizeVariantsEnabled", defaultValue: false });
   const addExtrasEnabled = useWatch({ control, name: "addExtrasEnabled", defaultValue: false });
   const addSideOptionsEnabled = useWatch({ control, name: "addSideOptionsEnabled", defaultValue: false });
@@ -136,15 +144,25 @@ const Page = () => {
   const extrasField = useFieldArray({ control, name: "extras" });
   const sideOptionsField = useFieldArray({ control, name: "sideOptions" });
 
+  // ── Same hasSizeVariants logic as add page ───────────────────────────────
   const selectedCategory = React.useMemo(
-    () => categories.find((category) => category.id === categoryId),
+    () => categories.find((c) => c.id === categoryId) ?? null,
     [categories, categoryId]
   );
+  const selectedSubCategory = React.useMemo(
+    () => (subCategoryId ? selectedCategory?.subCategories?.find((s) => s.id === subCategoryId) ?? null : null),
+    [selectedCategory, subCategoryId]
+  );
+  const hasSizeVariants = React.useMemo(() => {
+    if (selectedSubCategory) return selectedSubCategory.hasSizeVariants ?? false;
+    return selectedCategory?.hasSizeVariants ?? false;
+  }, [selectedCategory, selectedSubCategory]);
 
+  // ── Populate form when item loads ────────────────────────────────────────
   React.useEffect(() => {
-    if (!item) {
-      return;
-    }
+    if (!item) return;
+
+    prevCategoryIdRef.current = item.categoryId;
 
     reset({
       ...defaultValues,
@@ -159,53 +177,44 @@ const Page = () => {
       isSideFree: item.isSideFree,
       isExtrasOptional: item.isExtrasOptional,
       image: undefined,
+      basePrice: toNumber(item.basePrice, 0),
       sizeVariantsEnabled: item.hasSizeVariants,
       addExtrasEnabled: item.hasExtras,
       addSideOptionsEnabled: item.sideOptions.length > 0,
       sizeVariants: [
-        { size: "SMALL", price: toNumber(item.sizeVariants.find((variant) => variant.size === "SMALL")?.price, 0) },
-        { size: "MEDIUM", price: toNumber(item.sizeVariants.find((variant) => variant.size === "MEDIUM")?.price, 0) },
-        { size: "LARGE", price: toNumber(item.sizeVariants.find((variant) => variant.size === "LARGE")?.price, 0) },
-        { size: "REGULAR", price: toNumber(item.sizeVariants.find((variant) => variant.size === "REGULAR")?.price, 0) },
+        { size: "SMALL", price: toNumber(item.sizeVariants.find((v) => v.size === "SMALL")?.price, 0) },
+        { size: "MEDIUM", price: toNumber(item.sizeVariants.find((v) => v.size === "MEDIUM")?.price, 0) },
+        { size: "LARGE", price: toNumber(item.sizeVariants.find((v) => v.size === "LARGE")?.price, 0) },
+        { size: "REGULAR", price: toNumber(item.sizeVariants.find((v) => v.size === "REGULAR")?.price, 0) },
       ],
-      extras: item.extras.map((extra) => ({ name: extra.name, price: toNumber(extra.price, 0) })),
-      sideOptions: item.sideOptions.map((sideOption) => ({
-        name: sideOption.name,
-        price: toNumber(sideOption.price, 0),
-        isDefault: sideOption.isDefault,
+      extras: item.extras.map((e) => ({ name: e.name, price: toNumber(e.price, 0) })),
+      sideOptions: item.sideOptions.map((s) => ({
+        name: s.name,
+        price: toNumber(s.price, 0),
+        isDefault: s.isDefault,
       })),
     });
-
   }, [item, reset]);
 
+  // ── Clear subCategoryId only on a real user-driven category change ───────
+  const prevCategoryIdRef = React.useRef(categoryId);
   React.useEffect(() => {
-    if (categoryId) {
-      return;
-    }
-
+    if (prevCategoryIdRef.current === categoryId) return;
+    prevCategoryIdRef.current = categoryId;
     setValue("subCategoryId", "");
   }, [categoryId, setValue]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
     setValue("image", file, { shouldValidate: true });
     setLocalImagePreview(null);
-
     const reader = new FileReader();
-    reader.onload = (value) => {
-      setLocalImagePreview(value.target?.result as string);
-    };
+    reader.onload = (value) => setLocalImagePreview(value.target?.result as string);
     reader.readAsDataURL(file);
   };
 
-  const handleClose = () => {
-    router.back();
-  };
+  const handleClose = () => router.back();
 
   const imagePreview = localImagePreview ?? item?.imageUrl ?? null;
 
@@ -215,25 +224,38 @@ const Page = () => {
       return;
     }
 
-    const data = {
-      name: values.name,
-      description: values.description,
-      displayOrder: values.displayOrder,
-      isDeliverable: values.isDeliverable,
-      isAvailable: values.isAvailable,
-      allowCustomNote: values.allowCustomNote,
-      isSideFree: values.isSideFree,
-      isExtrasOptional: values.isExtrasOptional,
-      categoryId: values.categoryId,
-      subCategoryId: values.subCategoryId || "",
-      tagIds: [],
-      sizeVariants: values.sizeVariantsEnabled ? values.sizeVariants : [],
-      sideOptions: values.addSideOptionsEnabled ? values.sideOptions : [],
-      extras: values.addExtrasEnabled ? values.extras : [],
-    };
+    // Same manual basePrice validation as add page for simple mode
+    if (!hasSizeVariants && (values.basePrice === undefined || values.basePrice === null || isNaN(values.basePrice))) {
+      setError("basePrice", { message: "Base price is required" });
+      return;
+    }
+
+    const { image, basePrice, sizeVariantsEnabled, addExtrasEnabled, addSideOptionsEnabled, ...rest } = values;
+
+    const data = hasSizeVariants
+      ? {
+        // full mode — same as add page
+        ...rest,
+        subCategoryId: rest.subCategoryId || undefined,
+        sizeVariants: sizeVariantsEnabled ? rest.sizeVariants : undefined,
+        extras: addExtrasEnabled ? rest.extras : undefined,
+        sideOptions: addSideOptionsEnabled ? rest.sideOptions : undefined,
+        tagIds: [] as string[],
+      }
+      : {
+        // simple mode — same as add page
+        name: rest.name,
+        description: rest.description,
+        categoryId: rest.categoryId,
+        subCategoryId: rest.subCategoryId || undefined,
+        displayOrder: rest.displayOrder,
+        isDeliverable: rest.isDeliverable,
+        isAvailable: rest.isAvailable,
+        basePrice,
+      };
 
     try {
-      await updateMenuItem({ itemId, data: { data, image: values.image } }).unwrap();
+      await updateMenuItem({ itemId, data: { data: data as any, image: image ?? null as any } }).unwrap();
       toast.success("Item updated successfully");
       router.back();
     } catch {
@@ -267,6 +289,8 @@ const Page = () => {
   return (
     <div>
       <form onSubmit={handleSubmitForm} className="mx-auto max-w-2xl space-y-4 px-4 py-6">
+
+        {/* ── Basic Info ───────────────────────────────────────────── */}
         <Section title="Basic Info">
           <Field label="Item Name*" error={errors.name?.message}>
             <input className={inputCls(!!errors.name)} placeholder="e.g. Classic Margherita" {...register("name")} />
@@ -281,15 +305,13 @@ const Page = () => {
                   <select
                     className={selectCls(!!errors.categoryId)}
                     value={field.value ?? ""}
-                    onChange={(event) => field.onChange(event.target.value)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     onBlur={field.onBlur}
-                    disabled={loadingCategories}
+                    disabled={true}
                   >
                     <option value="">{loadingCategories ? "Loading…" : "Select category"}</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
                 )}
@@ -303,10 +325,11 @@ const Page = () => {
                 render={({ field }) => (
                   <select
                     className={selectCls(false, !categoryId)}
-                    disabled={!categoryId}
+                    disabled={true}
                     value={field.value ?? ""}
-                    onChange={(event) => field.onChange(event.target.value)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     onBlur={field.onBlur}
+
                   >
                     <option value="">
                       {!categoryId
@@ -315,10 +338,8 @@ const Page = () => {
                           ? "No sub-categories"
                           : "Select sub-category"}
                     </option>
-                    {(selectedCategory?.subCategories ?? []).map((subCategory) => (
-                      <option key={subCategory.id} value={subCategory.id}>
-                        {subCategory.name}
-                      </option>
+                    {(selectedCategory?.subCategories ?? []).map((sub) => (
+                      <option key={sub.id} value={sub.id}>{sub.name}</option>
                     ))}
                   </select>
                 )}
@@ -339,14 +360,32 @@ const Page = () => {
             <input type="number" min={0} className={inputCls(false)} placeholder="1" {...register("displayOrder")} />
           </Field>
 
+          {/* ── Price area: same conditional as add page ── */}
+          {!hasSizeVariants ? (
+            <Field label="Base Price*" error={errors.basePrice?.message}>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-black/40">৳</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={cn(inputCls(!!errors.basePrice), "pl-7")}
+                  placeholder="0.00"
+                  {...register("basePrice")}
+                />
+              </div>
+            </Field>
+          ) : (
+            <div className="flex items-center gap-2 rounded-xl border border-black/8 bg-black/2 px-3 py-2.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D94906]/60" />
+              <p className="text-[12px] text-description">
+                Price is managed via <span className="font-medium text-title">size variants</span>
+              </p>
+            </div>
+          )}
+
           <Field label="Item Image">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-              accept="image/*"
-              className="hidden"
-            />
+            <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -354,14 +393,7 @@ const Page = () => {
             >
               {imagePreview ? (
                 <div className="flex flex-col items-center gap-2">
-                  <Image
-                    src={imagePreview}
-                    alt="Preview"
-                    width={80}
-                    height={80}
-                    unoptimized
-                    className="h-20 w-20 rounded-md object-cover"
-                  />
+                  <Image src={imagePreview} alt="Preview" width={80} height={80} unoptimized className="h-20 w-20 rounded-md object-cover" />
                   <span className="text-[12px] font-medium text-[#666]">Change image</span>
                 </div>
               ) : (
@@ -374,143 +406,128 @@ const Page = () => {
           </Field>
         </Section>
 
+        {/* ── Availability ─────────────────────────────────────────── */}
         <Section title="Availability">
-          <Toggle title="Delivery Available" checked={!!isDeliverable} onToggle={(value) => setValue("isDeliverable", value)} />
-          <Toggle title="Item Available" checked={!!isAvailable} onToggle={(value) => setValue("isAvailable", value)} />
+          <Toggle title="Delivery Available" checked={!!isDeliverable} onToggle={(v) => setValue("isDeliverable", v)} />
+          <Toggle title="Item Available" checked={!!isAvailable} onToggle={(v) => setValue("isAvailable", v)} />
         </Section>
 
-        <Section title="Size Variants">
-          <Toggle
-            title="Enable size variants"
-            checked={!!sizeVariantsEnabled}
-            onToggle={(value) => setValue("sizeVariantsEnabled", value)}
-          />
-          {sizeVariantsEnabled ? (
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {sizeVariantsField.fields.map((field, index) => (
-                <div key={field.id} className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-black/40">{field.size}</p>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className={inputCls(!!errors.sizeVariants?.[index]?.price)}
-                    placeholder="0.00"
-                    {...register(`sizeVariants.${index}.price`)}
-                  />
-                  {errors.sizeVariants?.[index]?.price ? (
-                    <p className="text-[10px] text-red-500">{errors.sizeVariants[index]?.price?.message}</p>
-                  ) : null}
+        {/* ── Full mode only (hasSizeVariants: true) — same as add page ── */}
+        {hasSizeVariants && (
+          <>
+            <Section title="Size Variants">
+              <Toggle title="Enable size variants" checked={!!sizeVariantsEnabled} onToggle={(v) => setValue("sizeVariantsEnabled", v)} />
+              {sizeVariantsEnabled && (
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {sizeVariantsField.fields.map((field, index) => (
+                    <div key={field.id} className="space-y-1">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-black/40">{field.size}</p>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className={inputCls(!!errors.sizeVariants?.[index]?.price)}
+                        placeholder="0.00"
+                        {...register(`sizeVariants.${index}.price`)}
+                      />
+                      {errors.sizeVariants?.[index]?.price && (
+                        <p className="text-[10px] text-red-500">{errors.sizeVariants[index]?.price?.message}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : null}
-        </Section>
+              )}
+            </Section>
 
-        <Section title="Extras">
-          <Toggle title="Enable extras" checked={!!addExtrasEnabled} onToggle={(value) => setValue("addExtrasEnabled", value)} />
-          {addExtrasEnabled ? (
-            <div className="mt-3 space-y-2">
-              {extrasField.fields.length === 0 ? <p className="text-center text-[12px] text-black/30">No extras yet.</p> : null}
-              {extrasField.fields.map((field, index) => (
-                <div key={field.id} className="flex items-center gap-2">
-                  <input
-                    className={cn(inputCls(!!errors.extras?.[index]?.name), "flex-1")}
-                    placeholder="Extra name (e.g. Extra Sauce)"
-                    {...register(`extras.${index}.name`)}
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className={cn(inputCls(!!errors.extras?.[index]?.price), "w-24")}
-                    placeholder="Price"
-                    {...register(`extras.${index}.price`)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => extrasField.remove(index)}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-red-400 hover:bg-red-50"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => extrasField.append({ name: "", price: 0 })}
-                className="flex items-center gap-1.5 text-[12px] font-medium text-[#D04900] hover:text-[#b94400]"
-              >
-                <Plus className="size-3.5" /> Add extra
-              </button>
-            </div>
-          ) : null}
-        </Section>
-
-        <Section title="Side Options">
-          <Toggle
-            title="Enable side options"
-            checked={!!addSideOptionsEnabled}
-            onToggle={(value) => setValue("addSideOptionsEnabled", value)}
-          />
-          {addSideOptionsEnabled ? (
-            <div className="mt-3 space-y-2">
-              {sideOptionsField.fields.length === 0 ? (
-                <p className="text-center text-[12px] text-black/30">No side options yet.</p>
-              ) : null}
-              {sideOptionsField.fields.map((field, index) => (
-                <div key={field.id} className="flex items-center gap-2">
-                  <input
-                    className={cn(inputCls(!!errors.sideOptions?.[index]?.name), "flex-1")}
-                    placeholder="Side name (e.g. Cajun Fries)"
-                    {...register(`sideOptions.${index}.name`)}
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className={cn(inputCls(!!errors.sideOptions?.[index]?.price), "w-20")}
-                    placeholder="Price"
-                    {...register(`sideOptions.${index}.price`)}
-                  />
-                  <Controller
-                    control={control}
-                    name={`sideOptions.${index}.isDefault`}
-                    render={({ field: currentField }) => (
-                      <button
-                        type="button"
-                        onClick={() => currentField.onChange(!currentField.value)}
-                        className={cn(
-                          "h-9 shrink-0 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
-                          currentField.value
-                            ? "border-[#21B26B]/30 bg-[#21B26B]/10 text-[#21B26B]"
-                            : "border-black/10 bg-white text-black/30 hover:border-black/20 hover:text-black/50"
-                        )}
-                      >
-                        Default
+            <Section title="Extras">
+              <Toggle title="Enable extras" checked={!!addExtrasEnabled} onToggle={(v) => setValue("addExtrasEnabled", v)} />
+              {addExtrasEnabled && (
+                <div className="mt-3 space-y-2">
+                  {extrasField.fields.length === 0 && (
+                    <p className="text-center text-[12px] text-black/30">No extras yet.</p>
+                  )}
+                  {extrasField.fields.map((field, index) => (
+                    <div key={field.id} className="flex items-center gap-2">
+                      <input
+                        className={cn(inputCls(!!errors.extras?.[index]?.name), "flex-1")}
+                        placeholder="Extra name (e.g. Extra Sauce)"
+                        {...register(`extras.${index}.name`)}
+                      />
+                      <input
+                        type="number" step="0.01" min="0"
+                        className={cn(inputCls(!!errors.extras?.[index]?.price), "w-24")}
+                        placeholder="Price"
+                        {...register(`extras.${index}.price`)}
+                      />
+                      <button type="button" onClick={() => extrasField.remove(index)}
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-red-400 hover:bg-red-50">
+                        <Trash2 className="size-4" />
                       </button>
-                    )}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => sideOptionsField.remove(index)}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-red-400 hover:bg-red-50"
-                  >
-                    <Trash2 className="size-4" />
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => extrasField.append({ name: "", price: 0 })}
+                    className="flex items-center gap-1.5 text-[12px] font-medium text-[#D04900] hover:text-[#b94400]">
+                    <Plus className="size-3.5" /> Add extra
                   </button>
                 </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => sideOptionsField.append({ name: "", price: 0, isDefault: false })}
-                className="flex items-center gap-1.5 text-[12px] font-medium text-[#D04900] hover:text-[#b94400]"
-              >
-                <Plus className="size-3.5" /> Add side option
-              </button>
-            </div>
-          ) : null}
-        </Section>
+              )}
+            </Section>
 
+            <Section title="Side Options">
+              <Toggle title="Enable side options" checked={!!addSideOptionsEnabled} onToggle={(v) => setValue("addSideOptionsEnabled", v)} />
+              {addSideOptionsEnabled && (
+                <div className="mt-3 space-y-2">
+                  {sideOptionsField.fields.length === 0 && (
+                    <p className="text-center text-[12px] text-black/30">No side options yet.</p>
+                  )}
+                  {sideOptionsField.fields.map((field, index) => (
+                    <div key={field.id} className="flex items-center gap-2">
+                      <input
+                        className={cn(inputCls(!!errors.sideOptions?.[index]?.name), "flex-1")}
+                        placeholder="Side name (e.g. Cajun Fries)"
+                        {...register(`sideOptions.${index}.name`)}
+                      />
+                      <input
+                        type="number" step="0.01" min="0"
+                        className={cn(inputCls(!!errors.sideOptions?.[index]?.price), "w-20")}
+                        placeholder="Price"
+                        {...register(`sideOptions.${index}.price`)}
+                      />
+                      <Controller
+                        control={control}
+                        name={`sideOptions.${index}.isDefault`}
+                        render={({ field: f }) => (
+                          <button
+                            type="button"
+                            onClick={() => f.onChange(!f.value)}
+                            className={cn(
+                              "h-9 shrink-0 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+                              f.value
+                                ? "border-[#21B26B]/30 bg-[#21B26B]/10 text-[#21B26B]"
+                                : "border-black/10 bg-white text-black/30 hover:border-black/20 hover:text-black/50"
+                            )}
+                          >
+                            Default
+                          </button>
+                        )}
+                      />
+                      <button type="button" onClick={() => sideOptionsField.remove(index)}
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-red-400 hover:bg-red-50">
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => sideOptionsField.append({ name: "", price: 0, isDefault: false })}
+                    className="flex items-center gap-1.5 text-[12px] font-medium text-[#D04900] hover:text-[#b94400]">
+                    <Plus className="size-3.5" /> Add side option
+                  </button>
+                </div>
+              )}
+            </Section>
+          </>
+        )}
+
+        {/* ── Submit ───────────────────────────────────────────────── */}
         <div className="flex gap-3 pb-8 pt-2">
           <button
             type="button"
@@ -532,6 +549,8 @@ const Page = () => {
     </div>
   );
 };
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
