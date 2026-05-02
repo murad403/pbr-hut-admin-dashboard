@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useDeleteMenuItemMutation, useGetAllMenuItemsQuery, useGetCategoriesQuery } from "@/redux/features/dashboard/dashboard.api";
 import type { GetMenuItemsQueryParams, MenuItemEntity, MenuSize } from "@/redux/features/dashboard/dashboard.type";
-import CustomPagination from "@/components/shared/CustomPagination";
 import Image from "next/image";
+import CustomPagination from "@/components/shared/CustomPagination";
 
 
 
