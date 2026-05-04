@@ -16,9 +16,11 @@ const WeeklyRevenue = ({ weeklyRevenue }: WeeklyRevenueProps) => {
         });
 
         const maxValue = Math.max(...revenueValues, 1);
-        const roundedMax = Math.max(500, Math.ceil(maxValue / 500) * 500);
-        const tickStep = roundedMax / 6;
-        const yTicks = Array.from({ length: 7 }, (_, index) => Math.round((6 - index) * tickStep));
+        const tickStep = maxValue / 6;
+        const yTicks = Array.from({ length: 7 }, (_, index) => {
+            const tick = (6 - index) * tickStep;
+            return Math.round(tick * 100) / 100;
+        });
 
     return (
         <Card>

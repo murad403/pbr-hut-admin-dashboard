@@ -3,7 +3,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bike, ChevronLeft, ChevronRight, LogOut, Menu, SquareChartGantt, WalletCards, X} from "lucide-react";
+import { Bike, ChevronLeft, ChevronRight, LogOut, Menu, SquareChartGantt, WalletCards, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo/logo.png"
@@ -32,7 +32,7 @@ const menuItems = [
   { label: "Settings", icon: MdTune, href: "/settings" },
 ];
 
-const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile, onLogout}: {
+const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile, onLogout }: {
   collapsed: boolean;
   onToggleCollapse: () => void;
   onCloseMobile?: () => void;
