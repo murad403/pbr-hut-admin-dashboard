@@ -44,7 +44,7 @@ const SidebarContent = ({ collapsed, onToggleCollapse, onCloseMobile, onLogout }
     <div className="flex h-full w-full flex-col px-3 py-4">
       <div className={cn("mb-5 flex items-center", collapsed ? "justify-center" : "justify-between")}>
         <div className={cn("flex items-center justify-center w-full", collapsed ? "justify-center" : "gap-2")}>
-          <Image src={logo} alt="PBR Hut" width={63} height={32} className="object-cover" />
+          <Image src={logo} alt="PBR Hut" width={130} height={50} className="object-" />
           {!collapsed && <span className="text-xl font-semibold text-heading">PBR Hut</span>}
         </div>
 
