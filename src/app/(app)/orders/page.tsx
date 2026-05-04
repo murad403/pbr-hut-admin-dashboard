@@ -129,7 +129,7 @@ const Page = () => {
 
     const handleDownloadCsv = () => {
         const token = getAccessToken() ?? "";
-        const csvUrl = new URL("https://plbck79v-45598.inc1.devtunnels.ms/api/v1/admin/orders/download/csv/");
+        const csvUrl = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}/admin/orders/download/csv/`);
         csvUrl.searchParams.set("token", token);
         window.location.href = csvUrl.toString();
     };
