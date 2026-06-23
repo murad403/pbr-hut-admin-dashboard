@@ -53,15 +53,13 @@ function ToggleSwitch({
       role="switch"
       aria-checked={checked}
       onClick={onToggle}
-      className={`relative h-6 w-11 rounded-full p-1 transition-colors focus-visible:ring-2 focus-visible:ring-black/20 ${
-        checked ? 'bg-[#13A568]' : 'bg-black/20'
-      }`}
+      className={`relative h-6 w-11 rounded-full p-1 transition-colors focus-visible:ring-2 focus-visible:ring-black/20 ${checked ? 'bg-[#13A568]' : 'bg-black/20'
+        }`}
       aria-label={label}
     >
       <span
-        className={`block size-4 rounded-full bg-white transition-transform ${
-          checked ? 'translate-x-5' : 'translate-x-0'
-        }`}
+        className={`block size-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'
+          }`}
       />
     </button>
   );
@@ -95,6 +93,9 @@ export default function SettingsPage() {
   const [updateProfile, { isLoading: isUpdatingProfile }] = useUpdateProfileMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
 
+  const autocompleteRef = React.useRef<any>(null);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
   const { register, control, setValue, handleSubmit, reset, formState: { errors: settingsErrors } } = useForm<SettingsFormValues>({
     defaultValues: {
       name: '',
@@ -123,6 +124,7 @@ export default function SettingsPage() {
   });
 
   const isCODEnabled = useWatch({ control, name: 'isCODEnabled' });
+  const { ref: registerAddressRef, ...addressRegister } = register('address', { required: 'Address is required' });
 
   React.useEffect(() => {
     if (!profileData) return;
@@ -140,6 +142,64 @@ export default function SettingsPage() {
       isCODEnabled: profileData.isCODEnabled,
     });
   }, [profileData, reset]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const initAutocomplete = () => {
+      if (!inputRef.current || !(window as any).google) return;
+      if (autocompleteRef.current) return;
+
+      autocompleteRef.current = new (window as any).google.maps.places.Autocomplete(inputRef.current, {
+        fields: ['address_components', 'formatted_address', 'geometry'],
+      });
+
+      autocompleteRef.current.addListener('place_changed', () => {
+        const place = autocompleteRef.current?.getPlace();
+        if (place) {
+          const formattedAddress = place.formatted_address || '';
+          const lat = place.geometry?.location?.lat();
+          const lng = place.geometry?.location?.lng();
+
+          setValue('address', formattedAddress, { shouldDirty: true, shouldValidate: true });
+          if (lat !== undefined) {
+            setValue('latitude', String(lat), { shouldDirty: true, shouldValidate: true });
+          }
+          if (lng !== undefined) {
+            setValue('longitude', String(lng), { shouldDirty: true, shouldValidate: true });
+          }
+        }
+      });
+    };
+
+    if ((window as any).google && (window as any).google.maps && (window as any).google.maps.places) {
+      initAutocomplete();
+      return;
+    }
+
+    const scriptId = 'google-maps-places-script';
+    let script = document.getElementById(scriptId) as HTMLScriptElement;
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+
+    const handleScriptLoad = () => {
+      initAutocomplete();
+    };
+
+    script.addEventListener('load', handleScriptLoad);
+
+    return () => {
+      if (script) {
+        script.removeEventListener('load', handleScriptLoad);
+      }
+    };
+  }, [setValue]);
 
   const onSubmitProfile = async (values: SettingsFormValues) => {
     try {
@@ -188,6 +248,8 @@ export default function SettingsPage() {
     <div className="mx-auto w-full max-w-3xl space-y-3 pb-6">
       <form onSubmit={handleSubmit(onSubmitProfile)} className="space-y-2.5">
         <SectionCard title="Restaurant Information">
+          <input type="hidden" {...register('latitude')} />
+          <input type="hidden" {...register('longitude')} />
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <Label>Name</Label>
@@ -200,30 +262,14 @@ export default function SettingsPage() {
             <div>
               <Label>Address</Label>
               <input
-                {...register('address', { required: 'Address is required' })}
+                {...addressRegister}
+                ref={(e) => {
+                  registerAddressRef(e);
+                  inputRef.current = e;
+                }}
                 className="h-9 w-full rounded-sm border border-black/10 px-3 text-sm text-title"
               />
               {settingsErrors.address ? <p className="mt-1 text-xs text-red-600">{settingsErrors.address.message}</p> : null}
-            </div>
-            <div>
-              <Label>Latitude</Label>
-              <input
-                type="number"
-                step="any"
-                {...register('latitude', { required: 'Latitude is required' })}
-                className="h-9 w-full rounded-sm border border-black/10 px-3 text-sm text-title"
-              />
-              {settingsErrors.latitude ? <p className="mt-1 text-xs text-red-600">{settingsErrors.latitude.message}</p> : null}
-            </div>
-            <div>
-              <Label>Longitude</Label>
-              <input
-                type="number"
-                step="any"
-                {...register('longitude', { required: 'Longitude is required' })}
-                className="h-9 w-full rounded-sm border border-black/10 px-3 text-sm text-title"
-              />
-              {settingsErrors.longitude ? <p className="mt-1 text-xs text-red-600">{settingsErrors.longitude.message}</p> : null}
             </div>
             <div>
               <Label>Opening Hour</Label>
