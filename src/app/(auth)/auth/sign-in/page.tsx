@@ -30,10 +30,11 @@ export default function SignInPage() {
     try {
       const response = await signIn(values).unwrap();
       saveAccessToken(response.token);
-      router.push("/")
+      // router.push("/");
       clearAuthEmail();
       clearResetPasswordToken();
       toast.success('Login successfully');
+      window.location.href = "/";
     } catch (error) {
       // console.log(error)
       const message = error && typeof error === 'object' && 'data' in error && error.data && typeof error.data === 'object' && 'message' in error.data
